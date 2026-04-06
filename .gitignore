@@ -1,0 +1,6 @@
+build/
+node_modules/
+.cache/
+.zed/
+compile_commands.json
+.lock-waf*
