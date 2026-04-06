@@ -8,8 +8,18 @@
 #include <string.h>
 
 #define READ_INSTRUCTION() (state->instructions[state->pc++])
-#define PUSH() (state->stack[++(state->stkptr)])
-#define POP() (state->stack[--(state->stkptr)])
+#define PUSH() (state->stack[++(state->stack_ptr)])
+#define POP() (state->stack[(state->stack_ptr)--])
+
+#define COERCE_NUM(m_value) ((m_value).type == TYPE_NUM ? (m_value).num : 0)
+#define COERCE_INT(m_value)                                                    \
+  ((m_value).type == TYPE_NUM ? (m_value).num >> VM_NUM_RATIO_L2 : 0)
+#define COERCE_STR(m_value) coerce_str(m_value)
+#define COERCE_BOOL(m_value) coerce_bool(m_value)
+#define NUM_AS_FLOAT(m_num) ((m_num) / (float)VM_NUM_RATIO)
+#define FLOAT_AS_NUM(m_float) (VmNum)((m_float) * VM_NUM_RATIO)
+#define NUM_AS_DOUBL(m_num) ((m_num) / (double)VM_NUM_RATIO)
+#define DOUBL_AS_NUM(m_float) (VmNum)((m_float) * VM_NUM_RATIO)
 
 size_t mul_by_1_5(size_t value) { return value + (value >> 1); }
 
@@ -207,7 +217,7 @@ coerce_str(VmValue value) {
   if (value.type == TYPE_BOOL) {
     return value.b ? string_true : string_false;
   }
-  return string_fmt("%.2f", value.num);
+  return string_fmt("%.2f", NUM_AS_FLOAT(value.num));
 }
 
 static inline __attribute__((__always_inline__)) bool
@@ -224,16 +234,6 @@ coerce_bool(VmValue value) {
   return false;
 }
 
-#define COERCE_NUM(m_value) ((m_value).type == TYPE_NUM ? (m_value).num : 0)
-#define COERCE_INT(m_value)                                                    \
-  ((m_value).type == TYPE_NUM ? (m_value).num >> VM_NUM_RATIO_L2 : 0)
-#define COERCE_STR(m_value) coerce_str(m_value)
-#define COERCE_BOOL(m_value) coerce_bool(m_value)
-#define NUM_AS_FLOAT(m_num) ((m_num) / (float)VM_NUM_RATIO)
-#define FLOAT_AS_NUM(m_float) (VmNum)((m_float) * VM_NUM_RATIO)
-#define NUM_AS_DOUBL(m_num) ((m_num) / (double)VM_NUM_RATIO)
-#define DOUBL_AS_NUM(m_float) (VmNum)((m_float) * VM_NUM_RATIO)
-
 /**
  * Binary number operation
  */
@@ -243,7 +243,8 @@ coerce_bool(VmValue value) {
     VmValue _b = POP();                                                        \
     VmNum a = COERCE_NUM(_a);                                                  \
     VmNum b = COERCE_NUM(_b);                                                  \
-    PUSH() = (VmValue){.type = TYPE_NUM, .num = (m_operation)};                \
+    VmNum result = (m_operation);                                              \
+    PUSH() = (VmValue){.type = TYPE_NUM, .num = result};                       \
     cleanup_val(state, _a);                                                    \
     cleanup_val(state, _b);                                                    \
   } while (false)
@@ -505,6 +506,12 @@ bool vm_step(VmState *state) {
     };
     cleanup_val(state, _a);
     cleanup_val(state, _b);
+  } break;
+  case OP_PRINT: {
+    VmValue _a = POP();
+    VmString str = COERCE_STR(_a);
+    printf("%s\n", str.value);
+    cleanup_val(state, _a);
   } break;
   case OP_EOF: {
     return false;

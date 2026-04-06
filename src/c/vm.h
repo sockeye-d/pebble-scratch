@@ -41,6 +41,7 @@ typedef enum {
   OP_HAS,
   OP_LEN,
   OP_FMT,
+  OP_PRINT,
   OP_EOF,
 } VmOp;
 
@@ -88,12 +89,12 @@ typedef union {
 } VmInstruction;
 
 typedef struct {
-  VmInstruction *instructions;
   size_t pc;
-  size_t stkptr;
+  size_t stack_ptr;
   size_t occupied_vars;
   VmValue vars[MAX_VARS];
   VmValue stack[MAX_STACK];
+  VmInstruction *instructions;
 } VmState;
 
 bool vm_step(VmState *state);
