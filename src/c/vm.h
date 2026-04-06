@@ -1,17 +1,21 @@
+#ifndef __SRC_C_VM_H
+#define __SRC_C_VM_H
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
+#pragma once
+
 typedef enum {
   OP_NOP,
   OP_NUM,
-  OP_VAR,
   OP_STR,
   OP_STOR,
   OP_LOAD,
-  JMP,
-  JMPF,
-  JMPT,
+  OP_JMP,
+  OP_JMPF,
+  OP_JMPT,
   OP_ADD,
   OP_SUB,
   OP_MUL,
@@ -34,6 +38,9 @@ typedef enum {
   OP_MIN,
   OP_MAX,
   OP_CLAMP,
+  OP_ROND,
+  OP_FLOR,
+  OP_CEIL,
   OP_CAT,
   OP_SUBSTR,
   OP_SUBST,
@@ -46,18 +53,18 @@ typedef enum {
 } VmOp;
 
 typedef enum {
+  TYPE_NIL,
   TYPE_NUM,
   TYPE_BOOL,
   TYPE_STRING,
-  TYPE_VAR,
 } VmType;
 
 #define MAX_STACK 1024
-#define MAX_VARS 64
+#define MAX_VARS 1024
 
 typedef struct {
   size_t length;
-  uint16_t refcount; // Max refcount is MAX_STACK + MAX_VARS = 1088
+  uint16_t refcount; // Max refcount is MAX_STACK + MAX_VARS = 2048
   /**
    * Still null-terminated despite being length+value for easy interop
    */
@@ -77,7 +84,7 @@ typedef struct {
     VmNum num;
     bool b;
     VmString *string;
-    size_t var;
+    int32_t var;
   };
   VmType type;
 } VmValue;
@@ -92,10 +99,12 @@ typedef union {
 typedef struct {
   size_t pc;
   size_t stack_ptr;
-  size_t occupied_vars;
   VmValue vars[MAX_VARS];
   VmValue stack[MAX_STACK];
   VmInstruction *instructions;
 } VmState;
 
 bool vm_step(VmState *state);
+void vm_print_state(VmState *state);
+
+#endif

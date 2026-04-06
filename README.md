@@ -36,6 +36,8 @@ Bytecode instructions (load = load one value from memory):
 | min    | push(min(pop, pop))                              |
 | max    | push(max(pop, pop))                              |
 | clamp  | push(clamp(value=pop, min=pop, max=pop))         |
+| flor   | push(floor(pop))                                 |
+| ceil   | push(ceil(pop))                                  |
 | cat    | push(concat(pop, pop))                           |
 | substr | push(substring(string=pop, start=pop, end=pop))  |
 | subst  | push(substitute(string=pop, what=pop, with=pop)) |

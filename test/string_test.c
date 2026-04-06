@@ -1,15 +1,16 @@
 #include "common.h"
-#include <CUnit/CUnit.h>
 
 void string_test() {
   VmInstruction instructions[] = {
       MK_OP_STR('a', 'b', 'c', '\0'),
       MK_OP_STR('d', 'e', 'f', '\0'),
-      MK_OP(CAT),
+      MK_OP(OP_CAT),
+      MK_OP_STOR(0),
+      MK_OP_LOAD(0),
       (VmInstruction){
           .op = OP_EOF,
       },
   };
-  RUN_VM(occupied_vars = 2);
-  CU_ASSERT_STRING_EQUAL("defabc", state.stack[1].string->value);
+  RUN_VM();
+  CU_ASSERT_STRING_EQUAL("defabc", STACK(0).string->value);
 }

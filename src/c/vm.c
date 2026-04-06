@@ -8,6 +8,7 @@
 #include <string.h>
 
 #define READ_INSTRUCTION() (state->instructions[state->pc++])
+#define PEEK_INSTRUCTION() (state->instructions[state->pc])
 #define PUSH() (state->stack[++state->stack_ptr])
 #define POP() (state->stack[state->stack_ptr--])
 
@@ -20,7 +21,10 @@
 #define FLOAT_AS_NUM(m_float) (VmNum)((m_float) * VM_NUM_RATIO)
 #define NUM_AS_DOUBL(m_num) ((m_num) / (double)VM_NUM_RATIO)
 #define DOUBL_AS_NUM(m_float) (VmNum)((m_float) * VM_NUM_RATIO)
-#define REF_STACK() (++state->stack[state->stack_ptr].string->refcount)
+#define REF_STACK()                                                            \
+  (state->stack[state->stack_ptr].string->refcount == (uint16_t)-1             \
+       ? 0                                                                     \
+       : ++state->stack[state->stack_ptr].string->refcount)
 
 #define MAKE_STRING(m_name, m_char_ptr, m_length)                              \
   VmString *m_name = malloc(sizeof(VmString));                                 \
@@ -61,6 +65,9 @@ void set_var(VmState *state, size_t var_ref, VmValue new_value) {
   VmValue old_value = state->vars[var_ref];
   if (old_value.type == TYPE_STRING) {
     string_unref(old_value.string);
+  }
+  if (new_value.type == TYPE_STRING) {
+    string_ref(new_value.string);
   }
   state->vars[var_ref] = new_value;
 }
@@ -202,12 +209,13 @@ size_t string_find(const char *string, const char *subject) {
   return -1;
 }
 
-static VmString string_true = (VmString){
+const VmString string_true = (VmString){
     .refcount = (uint16_t)-1,
     .length = 4,
     .value = "true",
 };
-static VmString string_false = (VmString){
+
+const VmString string_false = (VmString){
     .refcount = (uint16_t)-1,
     .length = 5,
     .value = "false",
@@ -219,7 +227,8 @@ coerce_str(VmValue value) {
     return value.string;
   }
   if (value.type == TYPE_BOOL) {
-    return value.b ? &string_true : &string_false;
+    // this cast is probably fine
+    return value.b ? (VmString *)&string_true : (VmString *)&string_false;
   }
   return string_fmt("%.2f", NUM_AS_FLOAT(value.num));
 }
@@ -262,7 +271,21 @@ coerce_bool(VmValue value) {
     VmValue _b = POP();                                                        \
     bool a = COERCE_BOOL(_a);                                                  \
     bool b = COERCE_BOOL(_b);                                                  \
-    PUSH() = (VmValue){.type = TYPE_NUM, .num = (m_operation) ? 1 : 0};        \
+    PUSH() = (VmValue){.type = TYPE_BOOL, .b = m_operation};                   \
+    cleanup_val(state, _a);                                                    \
+    cleanup_val(state, _b);                                                    \
+  } while (false)
+
+/**
+ * Binary number to boolean operation
+ */
+#define BINARY_NB_OPR(m_operation)                                             \
+  do {                                                                         \
+    VmValue _a = POP();                                                        \
+    VmValue _b = POP();                                                        \
+    VmNum a = COERCE_NUM(_a);                                                  \
+    VmNum b = COERCE_NUM(_b);                                                  \
+    PUSH() = (VmValue){.type = TYPE_BOOL, .b = m_operation};                   \
     cleanup_val(state, _a);                                                    \
     cleanup_val(state, _b);                                                    \
   } while (false)
@@ -275,9 +298,6 @@ bool vm_step(VmState *state) {
   case OP_NUM: {
     PUSH() = (VmValue){.type = TYPE_NUM, .num = READ_INSTRUCTION().num};
   } break;
-  case OP_VAR: {
-    PUSH() = (VmValue){.type = TYPE_VAR, .var = READ_INSTRUCTION().var};
-  } break;
   case OP_STR: {
     size_t string_length;
     VmString *literal = make_string_literal(
@@ -289,35 +309,35 @@ bool vm_step(VmState *state) {
     REF_STACK();
   } break;
   case OP_STOR: {
-    size_t var_ref = READ_INSTRUCTION().var;
+    int32_t var_ref = READ_INSTRUCTION().var;
     VmValue a = POP();
     set_var(state, var_ref, a);
-    // a doesn't need cleanup because it gets moved to a variable.
+    cleanup_val(state, a);
   } break;
   case OP_LOAD: {
-    size_t var_ref = READ_INSTRUCTION().var;
+    int32_t var_ref = READ_INSTRUCTION().var;
     VmValue var = state->vars[var_ref];
     PUSH() = var;
     if (var.type == TYPE_STRING) {
       REF_STACK();
     }
   } break;
-  case JMP: {
-    size_t jmp_delta = READ_INSTRUCTION().var;
+  case OP_JMP: {
+    int32_t jmp_delta = READ_INSTRUCTION().var;
     state->pc += jmp_delta;
   } break;
-  case JMPF: {
+  case OP_JMPF: {
     VmValue a = POP();
+    int32_t jmp_delta = READ_INSTRUCTION().var;
     if (!COERCE_BOOL(a)) {
-      size_t jmp_delta = READ_INSTRUCTION().var;
       state->pc += jmp_delta;
     }
     cleanup_val(state, a);
   } break;
-  case JMPT: {
+  case OP_JMPT: {
     VmValue a = POP();
+    int32_t jmp_delta = READ_INSTRUCTION().var;
     if (COERCE_BOOL(a)) {
-      size_t jmp_delta = READ_INSTRUCTION().var;
       state->pc += jmp_delta;
     }
     cleanup_val(state, a);
@@ -338,22 +358,22 @@ bool vm_step(VmState *state) {
     BINARY_N_OPR(a % b);
   } break;
   case OP_NEQ: {
-    BINARY_N_OPR(a != b ? 1 : 0);
+    BINARY_NB_OPR(a != b);
   } break;
   case OP_EQ: {
-    BINARY_N_OPR(a == b ? 1 : 0);
+    BINARY_NB_OPR(a == b);
   } break;
   case OP_LT: {
-    BINARY_N_OPR(a < b ? 1 : 0);
+    BINARY_NB_OPR(a < b);
   } break;
   case OP_LTE: {
-    BINARY_N_OPR(a <= b ? 1 : 0);
+    BINARY_NB_OPR(a <= b);
   } break;
   case OP_GT: {
-    BINARY_N_OPR(a > b ? 1 : 0);
+    BINARY_NB_OPR(a > b);
   } break;
   case OP_GTE: {
-    BINARY_N_OPR(a >= b ? 1 : 0);
+    BINARY_NB_OPR(a >= b);
   } break;
   case OP_AND: {
     BINARY_B_OPR(a && b);
@@ -430,6 +450,33 @@ bool vm_step(VmState *state) {
     cleanup_val(state, _a);
     cleanup_val(state, _b);
     cleanup_val(state, _c);
+  } break;
+  case OP_ROND: {
+    VmValue _a = POP();
+    VmNum a = COERCE_NUM(_a);
+    PUSH() = (VmValue){
+        .type = TYPE_NUM,
+        .num = (a + VM_NUM_RATIO / 2) >> VM_NUM_RATIO_L2 << VM_NUM_RATIO_L2,
+    };
+    cleanup_val(state, _a);
+  } break;
+  case OP_FLOR: {
+    VmValue _a = POP();
+    VmNum a = COERCE_NUM(_a);
+    PUSH() = (VmValue){
+        .type = TYPE_NUM,
+        .num = a >> VM_NUM_RATIO_L2 << VM_NUM_RATIO_L2,
+    };
+    cleanup_val(state, _a);
+  } break;
+  case OP_CEIL: {
+    VmValue _a = POP();
+    VmNum a = COERCE_NUM(_a);
+    PUSH() = (VmValue){
+        .type = TYPE_NUM,
+        .num = (a + VM_NUM_RATIO - 1) >> VM_NUM_RATIO_L2 << VM_NUM_RATIO_L2,
+    };
+    cleanup_val(state, _a);
   } break;
   case OP_CAT: {
     VmValue _a = POP();
@@ -531,4 +578,142 @@ bool vm_step(VmState *state) {
   } break;
   }
   return true;
+}
+
+void print_value(VmValue value) {
+  switch (value.type) {
+  case TYPE_NIL: {
+    printf("TYPE_NIL");
+  } break;
+  case TYPE_NUM: {
+    printf("TYPE_NUM=%.2f", NUM_AS_DOUBL(value.num));
+  } break;
+  case TYPE_BOOL: {
+    if (value.b) {
+      printf("TYPE_BOOL=true");
+    } else {
+      printf("TYPE_BOOL=false");
+    }
+  } break;
+  case TYPE_STRING: {
+    printf("TYPE_STRING=%s, refcount=%u,", value.string->value,
+           value.string->refcount);
+  } break;
+  }
+}
+
+const char *print_instruction(VmInstruction instruction) {
+  switch (instruction.op) {
+  case OP_NOP:
+    return "OP_NOP";
+  case OP_NUM:
+    return "OP_NUM";
+  case OP_STR:
+    return "OP_STR";
+  case OP_STOR:
+    return "OP_STOR";
+  case OP_LOAD:
+    return "OP_LOAD";
+  case OP_JMP:
+    return "OP_JMP";
+  case OP_JMPF:
+    return "OP_JMPF";
+  case OP_JMPT:
+    return "OP_JMPT";
+  case OP_ADD:
+    return "OP_ADD";
+  case OP_SUB:
+    return "OP_SUB";
+  case OP_MUL:
+    return "OP_MUL";
+  case OP_DIV:
+    return "OP_DIV";
+  case OP_MOD:
+    return "OP_MOD";
+  case OP_NEQ:
+    return "OP_NEQ";
+  case OP_EQ:
+    return "OP_EQ";
+  case OP_LT:
+    return "OP_LT";
+  case OP_LTE:
+    return "OP_LTE";
+  case OP_GT:
+    return "OP_GT";
+  case OP_GTE:
+    return "OP_GTE";
+  case OP_AND:
+    return "OP_AND";
+  case OP_OR:
+    return "OP_OR";
+  case OP_NOT:
+    return "OP_NOT";
+  case OP_SQRT:
+    return "OP_SQRT";
+  case OP_ABS:
+    return "OP_ABS";
+  case OP_NEG:
+    return "OP_NEG";
+  case OP_LOG2:
+    return "OP_LOG2";
+  case OP_POW2:
+    return "OP_POW2";
+  case OP_MIN:
+    return "OP_MIN";
+  case OP_MAX:
+    return "OP_MAX";
+  case OP_CLAMP:
+    return "OP_CLAMP";
+  case OP_ROND:
+    return "OP_ROND";
+  case OP_FLOR:
+    return "OP_FLOR";
+  case OP_CEIL:
+    return "OP_CEIL";
+  case OP_CAT:
+    return "OP_CAT";
+  case OP_SUBSTR:
+    return "OP_SUBSTR";
+  case OP_SUBST:
+    return "OP_SUBST";
+  case OP_FIND:
+    return "OP_FIND";
+  case OP_HAS:
+    return "OP_HAS";
+  case OP_LEN:
+    return "OP_LEN";
+  case OP_FMT:
+    return "OP_FMT";
+  case OP_PRINT:
+    return "OP_PRINT";
+  case OP_EOF:
+    return "OP_EOF";
+  }
+  return "OP_UNKNOWN";
+}
+
+void vm_print_state(VmState *state) {
+  printf("PC = %zu\nsp = %zu\n", state->pc, state->stack_ptr);
+  if (state->stack_ptr == (size_t)-1) {
+    printf("no stack yet\n");
+  } else {
+    for (size_t i = 0; i <= state->stack_ptr; i++) {
+      if (i >= MAX_STACK) {
+        printf("Stack overflow!\n");
+        break;
+      }
+      printf("%zu = ", i);
+      print_value(state->stack[i]);
+      printf("\n");
+    }
+  }
+  size_t var_i = -1;
+  VmValue var;
+  while ((var = state->vars[++var_i]).type != TYPE_NIL) {
+    printf("var %zu = ", var_i);
+    print_value(var);
+    printf("\n");
+  }
+  printf("next instruction = %s\n", print_instruction(PEEK_INSTRUCTION()));
+  printf("-----\n");
 }
