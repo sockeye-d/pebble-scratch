@@ -8,8 +8,8 @@
 #include <string.h>
 
 #define READ_INSTRUCTION() (state->instructions[state->pc++])
-#define PUSH() (state->stack[++(state->stack_ptr)])
-#define POP() (state->stack[(state->stack_ptr)--])
+#define PUSH() (state->stack[++state->stack_ptr])
+#define POP() (state->stack[state->stack_ptr--])
 
 #define COERCE_NUM(m_value) ((m_value).type == TYPE_NUM ? (m_value).num : 0)
 #define COERCE_INT(m_value)                                                    \
