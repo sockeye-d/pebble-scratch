@@ -56,7 +56,8 @@ typedef enum {
 #define MAX_VARS 64
 
 typedef struct {
-  bool is_literal;
+  size_t length;
+  uint16_t refcount; // Max refcount is MAX_STACK + MAX_VARS = 1088
   /**
    * Still null-terminated despite being length+value for easy interop
    */
@@ -75,7 +76,7 @@ typedef struct {
   union {
     VmNum num;
     bool b;
-    VmString string;
+    VmString *string;
     size_t var;
   };
   VmType type;

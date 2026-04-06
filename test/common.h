@@ -11,6 +11,14 @@
     .num = m_number << VM_NUM_RATIO_L2,                                        \
   }
 
+#define MK_OP_STR(...)                                                         \
+  (VmInstruction){                                                             \
+      .op = OP_STR,                                                            \
+  },                                                                           \
+      (VmInstruction) {                                                        \
+    .ch = {__VA_ARGS__},                                                       \
+  }
+
 #define MK_OP_STOR(m_var_ref)                                                  \
   (VmInstruction){                                                             \
       .op = OP_STOR,                                                           \

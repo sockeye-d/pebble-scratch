@@ -20,29 +20,47 @@
 #define FLOAT_AS_NUM(m_float) (VmNum)((m_float) * VM_NUM_RATIO)
 #define NUM_AS_DOUBL(m_num) ((m_num) / (double)VM_NUM_RATIO)
 #define DOUBL_AS_NUM(m_float) (VmNum)((m_float) * VM_NUM_RATIO)
+#define REF_STACK() (++state->stack[state->stack_ptr].string->refcount)
+
+#define MAKE_STRING(m_name, m_char_ptr, m_length)                              \
+  VmString *m_name = malloc(sizeof(VmString));                                 \
+  do {                                                                         \
+    m_name->refcount = 0;                                                      \
+    {                                                                          \
+      m_name->value = m_char_ptr;                                              \
+      m_name->length = m_length;                                               \
+    }                                                                          \
+  } while (false)
 
 size_t mul_by_1_5(size_t value) { return value + (value >> 1); }
 
-VmString make_string_literal(char *value, size_t *read_length) {
-  VmString x;
+VmString *make_string_literal(char *value, size_t *read_length) {
   size_t length = strlen(value) + 1;
   *read_length = length;
-  return (VmString){
-      .is_literal = true,
-      .value = value,
-  };
+  VmString *x = malloc(sizeof(VmString));
+  x->length = length;
+  x->refcount = -1;
+  x->value = value;
+  return x;
 }
 
-void free_string(VmString string) {
-  if (!string.is_literal) {
-    free(string.value);
+void string_unref(VmString *string) {
+  if (string->refcount == (uint16_t)-1) {
+    // String literal, don't free.
+    return;
+  }
+  if (--string->refcount == 0) {
+    free(string->value);
+    free(string);
   }
 }
+
+void string_ref(VmString *string) { ++string->refcount; }
 
 void set_var(VmState *state, size_t var_ref, VmValue new_value) {
   VmValue old_value = state->vars[var_ref];
   if (old_value.type == TYPE_STRING) {
-    free_string(old_value.string);
+    string_unref(old_value.string);
   }
   state->vars[var_ref] = new_value;
 }
@@ -50,21 +68,13 @@ void set_var(VmState *state, size_t var_ref, VmValue new_value) {
 void cleanup_val(VmState *state, VmValue value) {
   if (value.type == TYPE_STRING) {
     // Check to make sure this string isn't already stored in a variable.
-    size_t occupied_vars = state->occupied_vars;
-    for (size_t var_i = 0; var_i < occupied_vars; var_i++) {
-      VmValue var_val = state->vars[var_i];
-      if (var_val.type == TYPE_STRING &&
-          var_val.string.value == value.string.value) {
-        return;
-      }
-    }
-    free_string(value.string);
+    string_unref(value.string);
   }
 }
 
 #define VM_STRING_MINIMUM_ALLOC 4
 
-VmString string_fmt(char *fmt, ...) {
+VmString *string_fmt(char *fmt, ...) {
   size_t allocation_size = VM_STRING_MINIMUM_ALLOC;
   char *str = NULL;
   while (true) {
@@ -76,10 +86,8 @@ VmString string_fmt(char *fmt, ...) {
     va_end(va_args);
 
     if (written <= allocation_size) {
-      return (VmString){
-          .is_literal = false,
-          .value = str,
-      };
+      MAKE_STRING(r, str, written);
+      return r;
     }
     free(str);
     // ~1.5×
@@ -87,20 +95,18 @@ VmString string_fmt(char *fmt, ...) {
   }
 }
 
-VmString string_cat(const char *a, const char *b) {
+VmString *string_cat(const char *a, const char *b) {
   size_t len_a = strlen(a);
   size_t len_b = strlen(b);
   char *str = malloc((len_a + len_b + 1) * sizeof(char));
   memcpy(str, a, len_a);
   memcpy(str + len_a, b, len_b);
   str[len_a + len_b] = '\0';
-  return (VmString){
-      .is_literal = false,
-      .value = str,
-  };
+  MAKE_STRING(r, str, len_a + len_b);
+  return r;
 }
 
-VmString string_substring(const char *a, size_t start, size_t end) {
+VmString *string_substring(const char *a, size_t start, size_t end) {
   if (end < start) {
     size_t temp = end;
     end = start;
@@ -117,14 +123,12 @@ VmString string_substring(const char *a, size_t start, size_t end) {
   char *str = malloc((size + 1) * sizeof(char));
   memcpy(str, a + start, size);
   str[size] = '\0';
-  return (VmString){
-      .is_literal = false,
-      .value = str,
-  };
+  MAKE_STRING(r, str, size);
+  return r;
 }
 
-VmString string_substitute(const char *string, const char *what,
-                           const char *with) {
+VmString *string_substitute(const char *string, const char *what,
+                            const char *with) {
 #define GROW_STRING(m_needed_len)                                              \
   do {                                                                         \
     while (m_needed_len > allocated_len) {                                     \
@@ -175,10 +179,8 @@ VmString string_substitute(const char *string, const char *what,
     }
   }
   str[str_i] = '\0';
-  return (VmString){
-      .is_literal = false,
-      .value = str,
-  };
+  MAKE_STRING(r, str, str_i);
+  return r;
 #undef GROW_STRING
 }
 
@@ -200,22 +202,24 @@ size_t string_find(const char *string, const char *subject) {
   return -1;
 }
 
-static const VmString string_true = (VmString){
-    .is_literal = true,
+static VmString string_true = (VmString){
+    .refcount = (uint16_t)-1,
+    .length = 4,
     .value = "true",
 };
-static const VmString string_false = (VmString){
-    .is_literal = true,
-    .value = "true",
+static VmString string_false = (VmString){
+    .refcount = (uint16_t)-1,
+    .length = 5,
+    .value = "false",
 };
 
-static inline __attribute__((__always_inline__)) VmString
+static inline __attribute__((__always_inline__)) VmString *
 coerce_str(VmValue value) {
   if (value.type == TYPE_STRING) {
     return value.string;
   }
   if (value.type == TYPE_BOOL) {
-    return value.b ? string_true : string_false;
+    return value.b ? &string_true : &string_false;
   }
   return string_fmt("%.2f", NUM_AS_FLOAT(value.num));
 }
@@ -229,7 +233,7 @@ coerce_bool(VmValue value) {
     return value.num != 0;
   }
   if (value.type == TYPE_STRING) {
-    return strcmp(string_true.value, value.string.value);
+    return strcasecmp(string_true.value, value.string->value);
   }
   return false;
 }
@@ -276,12 +280,13 @@ bool vm_step(VmState *state) {
   } break;
   case OP_STR: {
     size_t string_length;
-    VmString literal = make_string_literal(
+    VmString *literal = make_string_literal(
         (char *)&state->instructions[state->pc], &string_length);
     // Increment program counter by the length of the string divided by the
     // number of chars per instruction, rounded up.
     state->pc += (string_length + sizeof(size_t) - 1) / sizeof(size_t);
     PUSH() = (VmValue){.type = TYPE_STRING, .string = literal};
+    REF_STACK();
   } break;
   case OP_STOR: {
     size_t var_ref = READ_INSTRUCTION().var;
@@ -291,7 +296,11 @@ bool vm_step(VmState *state) {
   } break;
   case OP_LOAD: {
     size_t var_ref = READ_INSTRUCTION().var;
-    PUSH() = state->vars[var_ref];
+    VmValue var = state->vars[var_ref];
+    PUSH() = var;
+    if (var.type == TYPE_STRING) {
+      REF_STACK();
+    }
   } break;
   case JMP: {
     size_t jmp_delta = READ_INSTRUCTION().var;
@@ -425,10 +434,11 @@ bool vm_step(VmState *state) {
   case OP_CAT: {
     VmValue _a = POP();
     VmValue _b = POP();
-    VmString a = COERCE_STR(_a);
-    VmString b = COERCE_STR(_b);
-    PUSH() =
-        (VmValue){.type = TYPE_STRING, .string = string_cat(a.value, b.value)};
+    VmString *a = COERCE_STR(_a);
+    VmString *b = COERCE_STR(_b);
+    PUSH() = (VmValue){.type = TYPE_STRING,
+                       .string = string_cat(a->value, b->value)};
+    REF_STACK();
     cleanup_val(state, _a);
     cleanup_val(state, _b);
   } break;
@@ -436,13 +446,14 @@ bool vm_step(VmState *state) {
     VmValue _a = POP();
     VmValue _b = POP();
     VmValue _c = POP();
-    VmString str = COERCE_STR(_a);
+    VmString *str = COERCE_STR(_a);
     int32_t start = COERCE_INT(_b);
     int32_t end = COERCE_INT(_c);
     PUSH() = (VmValue){
         .type = TYPE_STRING,
-        .string = string_substring(str.value, start, end),
+        .string = string_substring(str->value, start, end),
     };
+    REF_STACK();
     cleanup_val(state, _a);
     cleanup_val(state, _b);
     cleanup_val(state, _c);
@@ -451,13 +462,14 @@ bool vm_step(VmState *state) {
     VmValue _a = POP();
     VmValue _b = POP();
     VmValue _c = POP();
-    VmString str = COERCE_STR(_a);
-    VmString what = COERCE_STR(_b);
-    VmString with = COERCE_STR(_c);
+    VmString *str = COERCE_STR(_a);
+    VmString *what = COERCE_STR(_b);
+    VmString *with = COERCE_STR(_c);
     PUSH() = (VmValue){
         .type = TYPE_STRING,
-        .string = string_substitute(str.value, what.value, with.value),
+        .string = string_substitute(str->value, what->value, with->value),
     };
+    REF_STACK();
     cleanup_val(state, _a);
     cleanup_val(state, _b);
     cleanup_val(state, _c);
@@ -465,11 +477,11 @@ bool vm_step(VmState *state) {
   case OP_FIND: {
     VmValue _a = POP();
     VmValue _b = POP();
-    VmString str = COERCE_STR(_a);
-    VmString subject = COERCE_STR(_b);
+    VmString *str = COERCE_STR(_a);
+    VmString *subject = COERCE_STR(_b);
     PUSH() = (VmValue){
         .type = TYPE_NUM,
-        .num = string_find(str.value, subject.value) << VM_NUM_RATIO_L2,
+        .num = string_find(str->value, subject->value) << VM_NUM_RATIO_L2,
     };
     cleanup_val(state, _a);
     cleanup_val(state, _b);
@@ -477,21 +489,21 @@ bool vm_step(VmState *state) {
   case OP_HAS: {
     VmValue _a = POP();
     VmValue _b = POP();
-    VmString str = COERCE_STR(_a);
-    VmString subject = COERCE_STR(_b);
+    VmString *str = COERCE_STR(_a);
+    VmString *subject = COERCE_STR(_b);
     PUSH() = (VmValue){
         .type = TYPE_NUM,
-        .num = string_find(str.value, subject.value) != -1 ? 1 : 0,
+        .num = string_find(str->value, subject->value) != -1 ? 1 : 0,
     };
     cleanup_val(state, _a);
     cleanup_val(state, _b);
   } break;
   case OP_LEN: {
     VmValue _a = POP();
-    VmString str = COERCE_STR(_a);
+    VmString *str = COERCE_STR(_a);
     PUSH() = (VmValue){
         .type = TYPE_NUM,
-        .num = strlen(str.value) << VM_NUM_RATIO_L2,
+        .num = strlen(str->value) << VM_NUM_RATIO_L2,
     };
     cleanup_val(state, _a);
   } break;
@@ -504,13 +516,14 @@ bool vm_step(VmState *state) {
         .type = TYPE_STRING,
         .string = string_fmt("%.*f", decimal_places, num),
     };
+    REF_STACK();
     cleanup_val(state, _a);
     cleanup_val(state, _b);
   } break;
   case OP_PRINT: {
     VmValue _a = POP();
-    VmString str = COERCE_STR(_a);
-    printf("%s\n", str.value);
+    VmString *str = COERCE_STR(_a);
+    printf("%s\n", str->value);
     cleanup_val(state, _a);
   } break;
   case OP_EOF: {
