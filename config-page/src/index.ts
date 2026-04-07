@@ -11,6 +11,7 @@ import { toolbox } from './toolbox'
 import './index.css'
 import * as layers from './layers'
 import { FlyoutItemInfo } from 'blockly/core/utils/toolbox'
+import * as bytecode from './generators/bytecode'
 
 // Register the blocks and generator with Blockly
 Blockly.common.defineBlocks(blocks)
@@ -19,18 +20,32 @@ Blockly.serialization.registry.register('layerSerializer', layers.serializer)
 
 // Set up UI elements and inject Blockly
 const blocklyDiv = document.getElementById('blocklyDiv')!
+const output = document.getElementById('generatedCode')!
 
 const ws = Blockly.inject(blocklyDiv, { toolbox, renderer: 'zelos' })
+
+function recompile() {
+  const blocks = ws.getAllBlocks()
+  if (blocks.length == 0) {
+    return
+  }
+  const block = blocks[0]
+  const code = bytecode.compile(new bytecode.Compiler(ws), block)
+  const disassembly = bytecode.disassemble(code)
+  output.innerText = disassembly
+}
 
 if (ws) {
   load(ws)
 
-  ws.addChangeListener((e: Blockly.Events.Abstract) => {
+  recompile()
+
+  ws.addChangeListener((e) => {
     if (e.isUiEvent) return
     save(ws)
   })
 
-  ws.addChangeListener((e: Blockly.Events.Abstract) => {
+  ws.addChangeListener((e) => {
     if (e.type === Blockly.Events.VAR_DELETE) {
       const toolbox = ws.getToolbox()
       toolbox?.refreshSelection()
@@ -38,6 +53,7 @@ if (ws) {
     if (e.isUiEvent || e.type == Blockly.Events.FINISHED_LOADING || ws.isDragging()) {
       return
     }
+    recompile()
   })
 
   ws.registerToolboxCategoryCallback('LAYER', (ws) => {

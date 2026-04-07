@@ -70,20 +70,6 @@ export const toolbox: ToolboxDefinition = {
       contents: [
         {
           kind: 'block',
-          type: 'controls_repeat_ext',
-          inputs: {
-            TIMES: {
-              shadow: {
-                type: 'math_number',
-                fields: {
-                  NUM: 10,
-                },
-              },
-            },
-          },
-        },
-        {
-          kind: 'block',
           type: 'controls_whileUntil',
         },
         {
@@ -115,14 +101,6 @@ export const toolbox: ToolboxDefinition = {
               },
             },
           },
-        },
-        {
-          kind: 'block',
-          type: 'controls_forEach',
-        },
-        {
-          kind: 'block',
-          type: 'controls_flow_statements',
         },
       ],
     },
