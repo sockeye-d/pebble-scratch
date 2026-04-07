@@ -6,43 +6,85 @@
 
 import * as Blockly from 'blockly'
 import { blocks } from './blocks/blocks'
-import { forBlock } from './generators/javascript'
-import { javascriptGenerator } from 'blockly/javascript'
 import { save, load } from './serialization'
 import { toolbox } from './toolbox'
 import './index.css'
+import * as layers from './layers'
+import { FlyoutItemInfo } from 'blockly/core/utils/toolbox'
 
 // Register the blocks and generator with Blockly
 Blockly.common.defineBlocks(blocks)
-Object.assign(javascriptGenerator.forBlock, forBlock)
+Blockly.common.defineBlocks(layers.blocks)
+Blockly.serialization.registry.register('layerSerializer', layers.serializer)
 
 // Set up UI elements and inject Blockly
-const blocklyDiv = document.getElementById('blocklyDiv')
+const blocklyDiv = document.getElementById('blocklyDiv')!
 
-if (!blocklyDiv) {
-  throw new Error(`div with id 'blocklyDiv' not found`)
-}
 const ws = Blockly.inject(blocklyDiv, { toolbox, renderer: 'zelos' })
 
 if (ws) {
-  // Load the initial state from storage and run the code.
   load(ws)
 
-  // Every time the workspace changes state, save the changes to storage.
   ws.addChangeListener((e: Blockly.Events.Abstract) => {
-    // UI events are things like scrolling, zooming, etc.
-    // No need to save after one of these.
     if (e.isUiEvent) return
     save(ws)
   })
 
-  // Whenever the workspace changes meaningfully, run the code again.
   ws.addChangeListener((e: Blockly.Events.Abstract) => {
-    // Don't run the code when the workspace finishes loading; we're
-    // already running it once when the application starts.
-    // Don't run the code during drags; we might have invalid state.
+    if (e.type === Blockly.Events.VAR_DELETE) {
+      const toolbox = ws.getToolbox()
+      toolbox?.refreshSelection()
+    }
     if (e.isUiEvent || e.type == Blockly.Events.FINISHED_LOADING || ws.isDragging()) {
       return
+    }
+  })
+
+  ws.registerToolboxCategoryCallback('LAYER', (ws) => {
+    const items: Blockly.utils.toolbox.FlyoutItemInfo[] = []
+
+    // Build whatever blocks you want to show
+    items.push({
+      kind: 'button',
+      text: 'Create layer...',
+      callbackkey: 'CREATE_LAYER',
+    })
+
+    for (const layer of layers.layers) {
+      items.push({
+        kind: 'button',
+        text: `Delete layer '${layer.name}'`,
+        callbackkey: 'DELETE_LAYER',
+      })
+    }
+
+    if (layers.layers.length > 0) {
+      items.push({
+        kind: 'block',
+        type: 'layer_on_draw',
+      })
+      items.push({
+        kind: 'block',
+        type: 'layer_draw',
+      })
+    }
+
+    return items
+  })
+
+  ws.registerButtonCallback('CREATE_LAYER', (p) => {
+    const result = prompt('Layer name')
+    if (result == null) {
+      return
+    }
+    layers.layers.push({ name: result })
+  })
+
+  ws.registerButtonCallback('DELETE_LAYER', (p) => {
+    const name: string = p.getButtonText().slice(14, p.getButtonText().length - 1)
+    if (confirm(`Delete layer '${name}'?`)) {
+      const index = layers.layers.findIndex((e) => e.name == name)
+      layers.layers.splice(index, 1)
     }
   })
 }

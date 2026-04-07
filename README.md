@@ -49,6 +49,7 @@ Bytecode instructions (load = load one value from memory):
 | len    | push(strlen(pop))                                |
 | fmt    | push(format(num=pop, decimal_places=pop))        |
 | print  | print(pop)                                       |
+| call   | call_handler(state, pop)                         |
 | eof    | Signifies the end of the memory stream           |
 
 ```kt

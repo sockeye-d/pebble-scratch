@@ -604,6 +604,13 @@ bool vm_step(VmState *state) {
     printf("%s\n", str->value);
     cleanup_val(state, _a);
   } break;
+  case OP_CALL: {
+    size_t call_id = READ_INSTRUCTION().var;
+    VmCallHandler handler = state->call_handler;
+    if (handler != NULL) {
+      handler(state, call_id);
+    }
+  } break;
   case OP_EOF: {
     return false;
   } break;
@@ -723,6 +730,8 @@ const char *print_instruction(VmInstruction instruction) {
     return "OP_FMT";
   case OP_PRINT:
     return "OP_PRINT";
+  case OP_CALL:
+    return "OP_CALL";
   case OP_EOF:
     return "OP_EOF";
   }

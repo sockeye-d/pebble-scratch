@@ -26,6 +26,14 @@ export const toolbox: ToolboxDefinition = {
           kind: 'block',
           type: 'events_main',
         },
+        {
+          kind: 'block',
+          type: 'events_on_button_pressed',
+        },
+        {
+          kind: 'block',
+          type: 'events_on_tapped',
+        },
       ],
     },
     {
@@ -52,14 +60,6 @@ export const toolbox: ToolboxDefinition = {
         {
           kind: 'block',
           type: 'logic_boolean',
-        },
-        {
-          kind: 'block',
-          type: 'logic_null',
-        },
-        {
-          kind: 'block',
-          type: 'logic_ternary',
         },
       ],
     },
@@ -135,18 +135,19 @@ export const toolbox: ToolboxDefinition = {
           kind: 'block',
           type: 'math_number',
           fields: {
-            NUM: 123,
+            NUM: 67,
           },
         },
         {
           kind: 'block',
-          type: 'math_arithmetic',
+          type: 'math_binary',
+          fields: { TYPE: 'ADD' },
           inputs: {
             A: {
               shadow: {
                 type: 'math_number',
                 fields: {
-                  NUM: 1,
+                  NUM: 6,
                 },
               },
             },
@@ -154,7 +155,7 @@ export const toolbox: ToolboxDefinition = {
               shadow: {
                 type: 'math_number',
                 fields: {
-                  NUM: 1,
+                  NUM: 7,
                 },
               },
             },
@@ -162,27 +163,13 @@ export const toolbox: ToolboxDefinition = {
         },
         {
           kind: 'block',
-          type: 'math_single',
+          type: 'math_unary',
           inputs: {
             NUM: {
               shadow: {
                 type: 'math_number',
                 fields: {
-                  NUM: 9,
-                },
-              },
-            },
-          },
-        },
-        {
-          kind: 'block',
-          type: 'math_trig',
-          inputs: {
-            NUM: {
-              shadow: {
-                type: 'math_number',
-                fields: {
-                  NUM: 45,
+                  NUM: 67,
                 },
               },
             },
@@ -192,73 +179,34 @@ export const toolbox: ToolboxDefinition = {
           kind: 'block',
           type: 'constant',
           fields: {
-            TYPE: '2PI',
+            TYPE: 'SIX_SEEEVEN',
           },
         },
         {
           kind: 'block',
-          type: 'math_round',
-          fields: {
-            OP: 'ROUND',
-          },
+          type: 'math_clamp',
           inputs: {
-            NUM: {
+            VAL: {
               shadow: {
                 type: 'math_number',
                 fields: {
-                  NUM: 3.1,
+                  NUM: 6.7,
                 },
               },
             },
-          },
-        },
-        {
-          kind: 'block',
-          type: 'math_modulo',
-          inputs: {
-            DIVIDEND: {
+            MIN: {
               shadow: {
                 type: 'math_number',
                 fields: {
-                  NUM: 64,
+                  NUM: 6,
                 },
               },
             },
-            DIVISOR: {
+            MAX: {
               shadow: {
                 type: 'math_number',
                 fields: {
-                  NUM: 10,
-                },
-              },
-            },
-          },
-        },
-        {
-          kind: 'block',
-          type: 'math_constrain',
-          inputs: {
-            VALUE: {
-              shadow: {
-                type: 'math_number',
-                fields: {
-                  NUM: 50,
-                },
-              },
-            },
-            LOW: {
-              shadow: {
-                type: 'math_number',
-                fields: {
-                  NUM: 1,
-                },
-              },
-            },
-            HIGH: {
-              shadow: {
-                type: 'math_number',
-                fields: {
-                  NUM: 100,
+                  NUM: 7,
                 },
               },
             },
@@ -368,6 +316,12 @@ export const toolbox: ToolboxDefinition = {
       name: 'Variables',
       categorystyle: 'variable_category',
       custom: 'VARIABLE',
+    },
+    {
+      kind: 'category',
+      name: 'Layers',
+      categorystyle: 'variable_category',
+      custom: 'LAYER',
     },
     {
       kind: 'category',
