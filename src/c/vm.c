@@ -611,6 +611,18 @@ bool vm_step(VmState *state) {
       handler(state, call_id);
     }
   } break;
+  case OP_TRUE: {
+    PUSH() = (VmValue){
+        .type = TYPE_BOOL,
+        .b = true,
+    };
+  } break;
+  case OP_FALS: {
+    PUSH() = (VmValue){
+        .type = TYPE_BOOL,
+        .b = false,
+    };
+  } break;
   case OP_EOF: {
     return false;
   } break;
@@ -732,6 +744,10 @@ const char *print_instruction(VmInstruction instruction) {
     return "OP_PRINT";
   case OP_CALL:
     return "OP_CALL";
+  case OP_TRUE:
+    return "OP_TRUE";
+  case OP_FALS:
+    return "OP_FALS";
   case OP_EOF:
     return "OP_EOF";
   }

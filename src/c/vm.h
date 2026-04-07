@@ -53,6 +53,8 @@ typedef enum {
   OP_FMT,
   OP_PRINT,
   OP_CALL,
+  OP_TRUE,
+  OP_FALS,
   OP_EOF,
 } VmOp;
 

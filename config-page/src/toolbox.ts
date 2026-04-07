@@ -71,6 +71,16 @@ export const toolbox: ToolboxDefinition = {
         {
           kind: 'block',
           type: 'controls_whileUntil',
+          inputs: {
+            BOOL: {
+              shadow: {
+                type: 'logic_boolean',
+                fields: {
+                  BOOL: 'TRUE',
+                },
+              },
+            },
+          },
         },
         {
           kind: 'block',
