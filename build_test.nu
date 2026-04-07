@@ -8,8 +8,15 @@ def analyze-file [] {
 }
 
 
-def --wrapped main [...args] {
-  let symbols = ls test/tests/*.c | get name | each --flatten { analyze-file }
+def --wrapped main [--enable: list<string> = [], ...args] {
+  let symbols = ls test/tests/*.c
+      | get name
+      | each --flatten { analyze-file }
+      | if ($enable | is-empty) {
+          $in
+        } else {
+          where $it in $enable
+        }
   let symbols_text = $symbols | each { $"void ($in)\(\);" } | str join "\n"
   let tests_text = $symbols | each { $"  ADD_TEST\(($in)\);" } | str join "\n"
   let file_contents = $"

@@ -496,6 +496,12 @@ bool vm_step(VmState *state) {
     VmValue _b = POP();
     VmNum x = COERCE_NUM(_a);
     VmNum y = COERCE_NUM(_b);
+    // atan2_lookup accepts 16-bit values, so if the numbers are larger than
+    // that, shift them down so that they aren't.
+    while (x >= 32768 || y >= 32768) {
+      x >>= 1;
+      y >>= 1;
+    }
     PUSH() = (VmValue){
         .type = TYPE_NUM,
         .num = atan2_lookup(y, x) * VM_NUM_RATIO * 360 / TRIG_MAX_RATIO,

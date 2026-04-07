@@ -61,10 +61,21 @@
       .instructions = instructions,                                            \
   };                                                                           \
   do {                                                                         \
-    /* vm_print_state(&state); */                                              \
+    vm_print_state(&state);                                                    \
   } while (vm_step(&state))
 
 #define STACK(m_delta) (state.stack[state.stack_ptr - m_delta])
 #define VAR(m_var_ref) (state.vars[m_var_ref])
+
+inline bool __attribute__((__always_inline__)) is_equal_approx(VmNum a,
+                                                               VmNum b) {
+  double a_d = NUM_AS_DOUBL(a);
+  double b_d = NUM_AS_DOUBL(b);
+  double diff = (b_d - a_d);
+  if (diff < 0.0) {
+    diff = -diff;
+  }
+  return diff < 0.05;
+}
 
 #endif
