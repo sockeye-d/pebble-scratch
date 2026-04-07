@@ -1,4 +1,4 @@
-#include "common.h"
+#include "../common.h"
 
 #define MY_STRING 0
 #define I 1

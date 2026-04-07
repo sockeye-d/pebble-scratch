@@ -1,5 +1,6 @@
 #include "vm.h"
 
+#include "trig.h"
 #include <math.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -17,10 +18,6 @@
   ((m_value).type == TYPE_NUM ? (m_value).num >> VM_NUM_RATIO_L2 : 0)
 #define COERCE_STR(m_value) coerce_str(m_value)
 #define COERCE_BOOL(m_value) coerce_bool(m_value)
-#define NUM_AS_FLOAT(m_num) ((m_num) / (float)VM_NUM_RATIO)
-#define FLOAT_AS_NUM(m_float) (VmNum)((m_float) * VM_NUM_RATIO)
-#define NUM_AS_DOUBL(m_num) ((m_num) / (double)VM_NUM_RATIO)
-#define DOUBL_AS_NUM(m_float) (VmNum)((m_float) * VM_NUM_RATIO)
 #define REF_STACK()                                                            \
   (state->stack[state->stack_ptr].string->refcount == (uint16_t)-1             \
        ? 0                                                                     \
@@ -472,11 +469,39 @@ bool vm_step(VmState *state) {
   case OP_CEIL: {
     VmValue _a = POP();
     VmNum a = COERCE_NUM(_a);
+    cleanup_val(state, _a);
+  } break;
+  case OP_SIN: {
+    VmValue _a = POP();
+    VmNum a = COERCE_NUM(_a);
     PUSH() = (VmValue){
         .type = TYPE_NUM,
-        .num = (a + VM_NUM_RATIO - 1) >> VM_NUM_RATIO_L2 << VM_NUM_RATIO_L2,
+        .num = sin_lookup(a / 360 * (TRIG_MAX_ANGLE / VM_NUM_RATIO)) *
+               VM_NUM_RATIO / TRIG_MAX_RATIO,
     };
     cleanup_val(state, _a);
+  } break;
+  case OP_COS: {
+    VmValue _a = POP();
+    VmNum a = COERCE_NUM(_a);
+    PUSH() = (VmValue){
+        .type = TYPE_NUM,
+        .num = cos_lookup(a / 360 * (TRIG_MAX_ANGLE / VM_NUM_RATIO)) *
+               VM_NUM_RATIO / TRIG_MAX_RATIO,
+    };
+    cleanup_val(state, _a);
+  } break;
+  case OP_AT2: {
+    VmValue _a = POP();
+    VmValue _b = POP();
+    VmNum x = COERCE_NUM(_a);
+    VmNum y = COERCE_NUM(_b);
+    PUSH() = (VmValue){
+        .type = TYPE_NUM,
+        .num = atan2_lookup(y, x) * VM_NUM_RATIO * 360 / TRIG_MAX_RATIO,
+    };
+    cleanup_val(state, _a);
+    cleanup_val(state, _b);
   } break;
   case OP_CAT: {
     VmValue _a = POP();
@@ -670,6 +695,12 @@ const char *print_instruction(VmInstruction instruction) {
     return "OP_FLOR";
   case OP_CEIL:
     return "OP_CEIL";
+  case OP_SIN:
+    return "OP_SIN";
+  case OP_COS:
+    return "OP_COS";
+  case OP_AT2:
+    return "OP_AT2";
   case OP_CAT:
     return "OP_CAT";
   case OP_SUBSTR:
@@ -693,7 +724,7 @@ const char *print_instruction(VmInstruction instruction) {
 }
 
 void vm_print_state(VmState *state) {
-  printf("PC = %zu\nsp = %zu\n", state->pc, state->stack_ptr);
+  printf("PC = %zu\nsp = %d\n", state->pc, (int32_t)state->stack_ptr);
   if (state->stack_ptr == (size_t)-1) {
     printf("no stack yet\n");
   } else {

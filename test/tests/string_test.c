@@ -1,4 +1,4 @@
-#include "common.h"
+#include "../common.h"
 
 void string_test() {
   VmInstruction instructions[] = {

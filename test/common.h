@@ -61,7 +61,7 @@
       .instructions = instructions,                                            \
   };                                                                           \
   do {                                                                         \
-    vm_print_state(&state);                                                    \
+    /* vm_print_state(&state); */                                              \
   } while (vm_step(&state))
 
 #define STACK(m_delta) (state.stack[state.stack_ptr - m_delta])

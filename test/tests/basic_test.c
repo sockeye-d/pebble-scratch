@@ -1,6 +1,6 @@
-#include "common.h"
+#include "../common.h"
 
-void test1() {
+void basic_test() {
   VmInstruction instructions[] = {
       MK_OP_NUM(512),
       MK_OP_NUM(512),

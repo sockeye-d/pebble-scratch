@@ -41,6 +41,9 @@ typedef enum {
   OP_ROND,
   OP_FLOR,
   OP_CEIL,
+  OP_SIN,
+  OP_COS,
+  OP_AT2,
   OP_CAT,
   OP_SUBSTR,
   OP_SUBST,
@@ -73,6 +76,11 @@ typedef struct {
 
 #define VM_NUM_RATIO_L2 8 // Yields a resolution of about 0.004
 #define VM_NUM_RATIO (1 << VM_NUM_RATIO_L2)
+
+#define NUM_AS_FLOAT(m_num) ((m_num) / (float)VM_NUM_RATIO)
+#define FLOAT_AS_NUM(m_float) (VmNum)((m_float) * VM_NUM_RATIO)
+#define NUM_AS_DOUBL(m_num) ((m_num) / (double)VM_NUM_RATIO)
+#define DOUBL_AS_NUM(m_float) (VmNum)((m_float) * VM_NUM_RATIO)
 
 /**
  * Fixed-point number with a ratio of 1/256

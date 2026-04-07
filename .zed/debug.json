@@ -6,8 +6,8 @@
   {
     "label": "Debug test",
     "adapter": "CodeLLDB",
-    "program": "test_exe",
+    "program": "build/test_exe",
     "request": "launch",
-    "build": { "command": "./test.sh", "args": ["-g", "-O0"] },
+    "build": { "command": "./build_test.nu", "args": ["-g", "-O0"] },
   },
 ]

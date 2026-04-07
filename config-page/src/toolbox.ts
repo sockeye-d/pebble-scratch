@@ -190,20 +190,9 @@ export const toolbox: ToolboxDefinition = {
         },
         {
           kind: 'block',
-          type: 'math_constant',
-        },
-        {
-          kind: 'block',
-          type: 'math_number_property',
-          inputs: {
-            NUMBER_TO_CHECK: {
-              shadow: {
-                type: 'math_number',
-                fields: {
-                  NUM: 0,
-                },
-              },
-            },
+          type: 'constant',
+          fields: {
+            TYPE: '2PI',
           },
         },
         {
@@ -221,13 +210,6 @@ export const toolbox: ToolboxDefinition = {
                 },
               },
             },
-          },
-        },
-        {
-          kind: 'block',
-          type: 'math_on_list',
-          fields: {
-            OP: 'SUM',
           },
         },
         {
@@ -282,54 +264,6 @@ export const toolbox: ToolboxDefinition = {
             },
           },
         },
-        {
-          kind: 'block',
-          type: 'math_random_int',
-          inputs: {
-            FROM: {
-              shadow: {
-                type: 'math_number',
-                fields: {
-                  NUM: 1,
-                },
-              },
-            },
-            TO: {
-              shadow: {
-                type: 'math_number',
-                fields: {
-                  NUM: 100,
-                },
-              },
-            },
-          },
-        },
-        {
-          kind: 'block',
-          type: 'math_random_float',
-        },
-        {
-          kind: 'block',
-          type: 'math_atan2',
-          inputs: {
-            X: {
-              shadow: {
-                type: 'math_number',
-                fields: {
-                  NUM: 1,
-                },
-              },
-            },
-            Y: {
-              shadow: {
-                type: 'math_number',
-                fields: {
-                  NUM: 1,
-                },
-              },
-            },
-          },
-        },
       ],
     },
     {
@@ -347,20 +281,6 @@ export const toolbox: ToolboxDefinition = {
         },
         {
           kind: 'block',
-          type: 'text_append',
-          inputs: {
-            TEXT: {
-              shadow: {
-                type: 'text',
-                fields: {
-                  TEXT: '',
-                },
-              },
-            },
-          },
-        },
-        {
-          kind: 'block',
           type: 'text_length',
           inputs: {
             VALUE: {
@@ -375,25 +295,14 @@ export const toolbox: ToolboxDefinition = {
         },
         {
           kind: 'block',
-          type: 'text_isEmpty',
+          type: 'text_indexOf',
           inputs: {
             VALUE: {
               shadow: {
                 type: 'text',
                 fields: {
-                  TEXT: '',
+                  TEXT: 'abc',
                 },
-              },
-            },
-          },
-        },
-        {
-          kind: 'block',
-          type: 'text_indexOf',
-          inputs: {
-            VALUE: {
-              block: {
-                type: 'variables_get',
               },
             },
             FIND: {
@@ -408,66 +317,22 @@ export const toolbox: ToolboxDefinition = {
         },
         {
           kind: 'block',
-          type: 'text_charAt',
+          type: 'text_find',
           inputs: {
-            VALUE: {
-              block: {
-                type: 'variables_get',
-              },
-            },
-          },
-        },
-        {
-          kind: 'block',
-          type: 'text_getSubstring',
-          inputs: {
-            STRING: {
-              block: {
-                type: 'variables_get',
-              },
-            },
-          },
-        },
-        {
-          kind: 'block',
-          type: 'text_changeCase',
-          inputs: {
-            TEXT: {
+            SUBJECT: {
               shadow: {
                 type: 'text',
                 fields: {
-                  TEXT: 'abc',
+                  TEXT: 'pebble time 2',
                 },
               },
             },
-          },
-        },
-        {
-          kind: 'block',
-          type: 'text_trim',
-          inputs: {
-            TEXT: {
+            WHAT: {
               shadow: {
                 type: 'text',
                 fields: {
-                  TEXT: 'abc',
+                  TEXT: 'time',
                 },
-              },
-            },
-          },
-        },
-        {
-          kind: 'block',
-          type: 'text_count',
-          inputs: {
-            SUB: {
-              shadow: {
-                type: 'text',
-              },
-            },
-            TEXT: {
-              shadow: {
-                type: 'text',
               },
             },
           },
@@ -486,17 +351,6 @@ export const toolbox: ToolboxDefinition = {
                 type: 'text',
               },
             },
-            TEXT: {
-              shadow: {
-                type: 'text',
-              },
-            },
-          },
-        },
-        {
-          kind: 'block',
-          type: 'text_reverse',
-          inputs: {
             TEXT: {
               shadow: {
                 type: 'text',

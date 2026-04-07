@@ -1,4 +1,4 @@
-#include "common.h"
+#include "../common.h"
 
 void fmt_test() {
   VmInstruction instructions[] = {

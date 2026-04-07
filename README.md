@@ -38,6 +38,9 @@ Bytecode instructions (load = load one value from memory):
 | clamp  | push(clamp(value=pop, min=pop, max=pop))         |
 | flor   | push(floor(pop))                                 |
 | ceil   | push(ceil(pop))                                  |
+| sin    | push(sin(pop)) degrees                           |
+| cos    | push(cos(pop)) degrees                           |
+| at2    | push(atan2(pop, pop)) degrees                    |
 | cat    | push(concat(pop, pop))                           |
 | substr | push(substring(string=pop, start=pop, end=pop))  |
 | subst  | push(substitute(string=pop, what=pop, with=pop)) |
@@ -45,6 +48,7 @@ Bytecode instructions (load = load one value from memory):
 | has    | push(contains(string=pop, what=pop))             |
 | len    | push(strlen(pop))                                |
 | fmt    | push(format(num=pop, decimal_places=pop))        |
+| print  | print(pop)                                       |
 | eof    | Signifies the end of the memory stream           |
 
 ```kt
