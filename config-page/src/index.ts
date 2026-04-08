@@ -30,7 +30,8 @@ function recompile() {
     return
   }
   const block = blocks[0]
-  const code = bytecode.compile(new bytecode.Compiler(ws), block)
+  const compiler = new bytecode.Compiler(ws)
+  const code = compiler.compile(block)
   const disassembly = bytecode.disassemble(code)
   output.innerText = disassembly
 }

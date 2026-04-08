@@ -52,11 +52,11 @@ export enum VmOp {
 }
 
 export type VmInstruction =
-  | { type: 'nil'; blockType: string }
+  | { type: 'nil'; info: string }
   | { type: 'op'; op: VmOp }
   | { type: 'num'; num: number }
   | { type: 'var'; var: VarRef }
-  | { type: 'string'; chars: [number, number, number, number, number, number, number, number] }
+  | { type: 'str'; chars: [number, number, number, number, number, number, number, number] }
 
 type VarID = string
 type VarRef = number
@@ -77,6 +77,24 @@ export class Compiler {
     this.variables[id] = this.nextRef
     return this.nextRef++
   }
+
+  private compileSingle(block: blockly.Block): VmInstruction[] {
+    const compilerFun = blockCompilers[block.type]
+    if (compilerFun == undefined) {
+      return [{ type: 'nil', info: block.type }]
+    }
+    return compilerFun(this, block)
+  }
+
+  public compile(block: blockly.Block): VmInstruction[] {
+    let instructions: VmInstruction[] = []
+    let current: blockly.Block | null = block
+    while (current != null) {
+      instructions = [...instructions, ...this.compileSingle(current)]
+      current = current.getNextBlock()
+    }
+    return instructions
+  }
 }
 
 export function disassemble(instructions: VmInstruction[]): string {
@@ -85,23 +103,23 @@ export function disassemble(instructions: VmInstruction[]): string {
       switch (e.type) {
         case 'op':
           return `op  ${VmOp[e.op]}`
-        case 'string':
-          const codepointRepresentation = e.chars.map((e) => e.toLocaleString(undefined, { minimumIntegerDigits: 3 }))
-          const stringRepresentation = e.chars.map((e) => String.fromCharCode(e)).join('')
-          return `str ${codepointRepresentation} (${stringRepresentation})`
+        case 'str':
+          const codepoint = e.chars.map((e) => e.toLocaleString(undefined, { minimumIntegerDigits: 3 }))
+          const string = e.chars.map((e) => String.fromCharCode(e)).join('')
+          return `str ${codepoint} (${string})`
         case 'var':
           return `var ${e.var}`
         case 'num':
           return `num ${e.num}`
         case 'nil':
-          return `nil ${e.blockType}`
+          return `nil ${e.info}`
       }
     })
     .join('\n')
 }
 
 const blockCompilers: Record<string, ((compiler: Compiler, block: blockly.Block) => VmInstruction[]) | undefined> = {
-  logic_boolean: (compiler, block) => {
+  logic_boolean: (_compiler, block) => {
     const OPS: Record<string, VmOp> = {
       TRUE: VmOp.True,
       FALSE: VmOp.Fals,
@@ -121,7 +139,7 @@ const blockCompilers: Record<string, ((compiler: Compiler, block: blockly.Block)
     const mode = block.getFieldValue('MODE')
     const condition = block.getInputTargetBlock('BOOL')
     const inner = block.getInputTargetBlock('DO')
-    const innerBytecode = inner == null ? [<VmInstruction>{ type: 'op', op: VmOp.Nop }] : compile(compiler, inner)
+    const innerBytecode = inner == null ? [<VmInstruction>{ type: 'op', op: VmOp.Nop }] : compiler.compile(inner)
     const exit: VmInstruction[] = [
       {
         type: 'op',
@@ -132,7 +150,7 @@ const blockCompilers: Record<string, ((compiler: Compiler, block: blockly.Block)
         var: innerBytecode.length + 2,
       },
     ]
-    const conditionBytecode = condition == null ? [] : compile(compiler, condition)
+    const conditionBytecode = condition == null ? [] : compiler.compile(condition)
     const loop: VmInstruction[] = [
       {
         type: 'op',
@@ -151,11 +169,11 @@ const blockCompilers: Record<string, ((compiler: Compiler, block: blockly.Block)
     let result: VmInstruction[] = []
     for (let i = 0; i < neededLength; i++) {
       if (i % 8 == 0) {
-        result.push({ type: 'string', chars: [0, 0, 0, 0, 0, 0, 0, 0] })
+        result.push({ type: 'str', chars: [0, 0, 0, 0, 0, 0, 0, 0] })
       }
       const code = i < text.length ? text.charCodeAt(i) : 0
       const top = result[result.length - 1]
-      if (top.type != 'string') {
+      if (top.type != 'str') {
         continue
       }
       top.chars[i % 8] = code
@@ -182,8 +200,8 @@ const blockCompilers: Record<string, ((compiler: Compiler, block: blockly.Block)
     const b = block.getInputTargetBlock('B')!
     const op = OPS[block.getFieldValue('TYPE')]
     return [
-      ...compile(compiler, b),
-      ...compile(compiler, a),
+      ...compiler.compile(b),
+      ...compiler.compile(a),
       {
         type: 'op',
         op,
@@ -205,7 +223,7 @@ const blockCompilers: Record<string, ((compiler: Compiler, block: blockly.Block)
     const num = block.getInputTargetBlock('NUM')!
     const op = OPS[block.getFieldValue('TYPE')]
     return [
-      ...compile(compiler, num),
+      ...compiler.compile(num),
       {
         type: 'op',
         op,
@@ -220,7 +238,7 @@ const blockCompilers: Record<string, ((compiler: Compiler, block: blockly.Block)
     }
     const ref = compiler.variableRefFor(varID)
     return [
-      ...compile(compiler, value),
+      ...compiler.compile(value),
       {
         type: 'op',
         op: VmOp.Stor,
@@ -231,22 +249,4 @@ const blockCompilers: Record<string, ((compiler: Compiler, block: blockly.Block)
       },
     ]
   },
-}
-
-function compileSingle(compiler: Compiler, block: blockly.Block): VmInstruction[] {
-  const compilerFun = blockCompilers[block.type]
-  if (compilerFun == undefined) {
-    return [{ type: 'nil', blockType: block.type }]
-  }
-  return compilerFun(compiler, block)
-}
-
-export function compile(compiler: Compiler, block: blockly.Block): VmInstruction[] {
-  let instructions: VmInstruction[] = []
-  let current: blockly.Block | null = block
-  while (current != null) {
-    instructions = [...instructions, ...compileSingle(compiler, current)]
-    current = current.getNextBlock()
-  }
-  return instructions
 }
