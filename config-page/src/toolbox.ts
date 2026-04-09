@@ -44,6 +44,30 @@ export const toolbox: ToolboxDefinition = {
         {
           kind: 'block',
           type: 'controls_if',
+          inputs: {
+            CONDITION: {
+              shadow: {
+                type: 'logic_boolean',
+                fields: {
+                  BOOL: 'FALSE',
+                },
+              },
+            },
+          },
+        },
+        {
+          kind: 'block',
+          type: 'controls_if_else',
+          inputs: {
+            CONDITION: {
+              shadow: {
+                type: 'logic_boolean',
+                fields: {
+                  BOOL: 'FALSE',
+                },
+              },
+            },
+          },
         },
         {
           kind: 'block',

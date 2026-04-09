@@ -246,6 +246,50 @@ coerce_bool(VmValue value) {
   return false;
 }
 
+int val_cmp(VmValue a, VmValue b) {
+  if (a.type == TYPE_STRING && b.type != TYPE_STRING) {
+    VmValue str_b = (VmValue){
+        .type = TYPE_STRING,
+        .string = COERCE_STR(b),
+    };
+    int result = val_cmp(a, str_b);
+    string_unref(str_b.string);
+    return result;
+  }
+  if (a.type != TYPE_STRING && b.type == TYPE_STRING) {
+    VmValue str_a = (VmValue){
+        .type = TYPE_STRING,
+        .string = COERCE_STR(a),
+    };
+    int result = val_cmp(str_a, b);
+    string_unref(str_a.string);
+    return result;
+  }
+  if (a.type == TYPE_STRING && b.type == TYPE_STRING) {
+    return strcmp(a.string->value, b.string->value);
+  }
+  if (a.num < 0) {
+    return -1;
+  }
+  if (b.num > 0) {
+    return 1;
+  }
+  return 0;
+}
+
+/**
+ * Binary operation
+ */
+#define BINARY_OPR(...)                                                        \
+  do {                                                                         \
+    VmValue a = POP();                                                         \
+    VmValue b = POP();                                                         \
+    VmValue result = (__VA_ARGS__);                                            \
+    PUSH() = result;                                                           \
+    cleanup_val(state, a);                                                     \
+    cleanup_val(state, b);                                                     \
+  } while (false)
+
 /**
  * Binary number operation
  */
@@ -394,22 +438,22 @@ bool vm_step(VmState *state) {
     BINARY_N_OPR(a % b);
   } break;
   case OP_NEQ: {
-    BINARY_NB_OPR(a != b);
+    BINARY_OPR((VmValue){.type = TYPE_BOOL, .b = val_cmp(a, b) != 0});
   } break;
   case OP_EQ: {
-    BINARY_NB_OPR(a == b);
+    BINARY_OPR((VmValue){.type = TYPE_BOOL, .b = val_cmp(a, b) == 0});
   } break;
   case OP_LT: {
-    BINARY_NB_OPR(a < b);
+    BINARY_OPR((VmValue){.type = TYPE_BOOL, .b = val_cmp(a, b) < 0});
   } break;
   case OP_LTE: {
-    BINARY_NB_OPR(a <= b);
+    BINARY_OPR((VmValue){.type = TYPE_BOOL, .b = val_cmp(a, b) <= 0});
   } break;
   case OP_GT: {
-    BINARY_NB_OPR(a > b);
+    BINARY_OPR((VmValue){.type = TYPE_BOOL, .b = val_cmp(a, b) > 0});
   } break;
   case OP_GTE: {
-    BINARY_NB_OPR(a >= b);
+    BINARY_OPR((VmValue){.type = TYPE_BOOL, .b = val_cmp(a, b) >= 0});
   } break;
   case OP_AND: {
     BINARY_B_OPR(a && b);

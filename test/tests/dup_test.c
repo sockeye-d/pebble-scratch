@@ -3,7 +3,7 @@
 void basic_dup_test() {
   VmInstruction instructions[] = {
       MK_OP_NUM(512.0),
-      MK_OP(OP_DUP),
+      MK_OP_DUP(1),
       (VmInstruction){
           .op = OP_EOF,
       },
@@ -39,10 +39,10 @@ void loop_with_dup_test() {
       MK_OP(OP_ADD),
 
       // L3.
-      MK_OP(OP_DUP),
+      MK_OP_DUP(1),
       MK_OP_NUM(10),
       MK_OP(OP_LT),
-      MK_OP_JMP(-9, F),
+      MK_OP_JMP(-10, F),
       (VmInstruction){
           .op = OP_EOF,
       },

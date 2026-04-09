@@ -55,6 +55,58 @@ const events_on_tapped = {
   colour: 30,
 }
 
+const controls_if = {
+  type: 'controls_if',
+  message0: 'if %1 then',
+  message1: '%1',
+  args0: [
+    {
+      type: 'input_value',
+      name: 'CONDITION',
+      check: 'Boolean',
+    },
+  ],
+  args1: [
+    {
+      type: 'input_statement',
+      name: 'DO',
+    },
+  ],
+  previousStatement: null,
+  nextStatement: null,
+  colour: 210,
+}
+
+const controls_if_else = {
+  type: 'controls_if_else',
+  message0: 'if %1 then',
+  message1: '%1',
+  message2: 'else',
+  message3: '%1',
+  args0: [
+    {
+      type: 'input_value',
+      name: 'CONDITION',
+      check: 'Boolean',
+    },
+  ],
+  args1: [
+    {
+      type: 'input_statement',
+      name: 'DO',
+    },
+  ],
+  args3: [
+    {
+      type: 'input_statement',
+      name: 'ELSE',
+    },
+  ],
+  previousStatement: null,
+  nextStatement: null,
+  colour: 210,
+}
+
 const math_unary = {
   type: 'math_unary',
   message0: '%1 of %2',
@@ -181,6 +233,8 @@ export const blocks = Blockly.common.createBlockDefinitionsFromJsonArray([
   events_on_button_pressed,
   events_main,
   events_on_tapped,
+  controls_if,
+  controls_if_else,
   math_unary,
   math_binary,
   math_constant,

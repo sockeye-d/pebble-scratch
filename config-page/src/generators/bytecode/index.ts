@@ -32,8 +32,6 @@ export class Compiler {
   private compileSingle(block: blockly.Block): VmInstruction[] {
     const compilerFun = blockCompilers[block.type]
     if (compilerFun == undefined) {
-      console.log(block.inputList)
-      console.log([...block.getFields()])
       return ops.nil(block.type)
     }
     return compilerFun(this, block)
@@ -72,6 +70,28 @@ export function disassemble(instructions: VmInstruction[]): string {
 }
 
 const blockCompilers: Record<string, ((compiler: Compiler, block: blockly.Block) => VmInstruction[]) | undefined> = {
+  controls_if: (compiler, block) => {
+    const ifBlock = block.getInputTargetBlock('CONDITION')!
+    const ifBytecode = compiler.compile(ifBlock)
+    const doBlock = block.getInputTargetBlock('DO')
+    const doBytecode = doBlock == null ? [] : compiler.compile(doBlock)
+    return [...ifBytecode, ...ops.jmp(doBytecode.length, 'onFalse'), ...doBytecode]
+  },
+  controls_if_else: (compiler, block) => {
+    const ifBlock = block.getInputTargetBlock('CONDITION')!
+    const ifBytecode = compiler.compile(ifBlock)
+    const doBlock = block.getInputTargetBlock('DO')
+    const doBytecode = doBlock == null ? [] : compiler.compile(doBlock)
+    const elBlock = block.getInputTargetBlock('ELSE')
+    const elBytecode = elBlock == null ? [] : compiler.compile(elBlock)
+    return [
+      ...ifBytecode,
+      ...ops.jmp(doBytecode.length + elBytecode.length + 2, 'onFalse'),
+      ...doBytecode,
+      ...ops.jmp(elBytecode.length),
+      ...elBytecode,
+    ]
+  },
   logic_boolean: (_compiler, block) => {
     const OPS: Record<string, VmOp> = {
       TRUE: VmOp.True,
@@ -83,6 +103,23 @@ const blockCompilers: Record<string, ((compiler: Compiler, block: blockly.Block)
         op: OPS[block.getFieldValue('BOOL')],
       },
     ]
+  },
+  logic_compare: (compiler, block) => {
+    const OPS: Record<string, VmOp> = {
+      EQ: VmOp.Eq,
+      NEQ: VmOp.Neq,
+      LT: VmOp.Lt,
+      LTE: VmOp.Lte,
+      GT: VmOp.Gt,
+      GTE: VmOp.Gte,
+    }
+    const aBlock = block.getInputTargetBlock('A')
+    const bBlock = block.getInputTargetBlock('B')
+    if (aBlock == null || bBlock == null) {
+      return ops.op(VmOp.Fals)
+    }
+    const op = block.getFieldValue('OP')
+    return [...compiler.compile(bBlock), ...compiler.compile(aBlock), ...ops.op(OPS[op])]
   },
   controls_repeat_ext: (compiler, block) => {
     const times = block.getInputTargetBlock('TIMES')!
@@ -141,14 +178,7 @@ const blockCompilers: Record<string, ((compiler: Compiler, block: blockly.Block)
     }
     return result
   },
-  math_number: (_compiler, block) => {
-    return [
-      {
-        type: 'num',
-        num: block.getFieldValue('NUM'),
-      },
-    ]
-  },
+  math_number: (_compiler, block) => ops.num(block.getFieldValue('NUM')),
   math_binary: (compiler, block) => {
     const OPS: Record<string, VmOp> = {
       ADD: VmOp.Add,
@@ -160,14 +190,7 @@ const blockCompilers: Record<string, ((compiler: Compiler, block: blockly.Block)
     const a = block.getInputTargetBlock('A')!
     const b = block.getInputTargetBlock('B')!
     const op = OPS[block.getFieldValue('TYPE')]
-    return [
-      ...compiler.compile(b),
-      ...compiler.compile(a),
-      {
-        type: 'op',
-        op,
-      },
-    ]
+    return [...compiler.compile(b), ...compiler.compile(a), ...ops.op(op)]
   },
   math_unary: (compiler, block) => {
     const OPS: Record<string, VmOp> = {

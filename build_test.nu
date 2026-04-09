@@ -21,7 +21,7 @@ def --wrapped main [--enable: list<string> = [], ...args] {
   let symbols = if ($enable | is-empty) {
     $symbols | get symbols | flatten
   } else {
-    [...($symbols | where file in $enable_files | get symbols), ...($symbols | get symbols | flatten | where $it in $enable_symbols)]
+    [...($symbols | where file in $enable_files | get symbols | flatten), ...($symbols | get symbols | flatten | where $it in $enable_symbols)]
   }
   let symbols_text = $symbols | each { $"void ($in)\(\);" } | str join "\n"
   let tests_text = $symbols | each { $"  ADD_TEST\(($in)\);" } | str join "\n"
