@@ -248,21 +248,15 @@ coerce_bool(VmValue value) {
 
 int val_cmp(VmValue a, VmValue b) {
   if (a.type == TYPE_STRING && b.type != TYPE_STRING) {
-    VmValue str_b = (VmValue){
-        .type = TYPE_STRING,
-        .string = COERCE_STR(b),
-    };
-    int result = val_cmp(a, str_b);
-    string_unref(str_b.string);
+    VmString *str_b = COERCE_STR(b);
+    int result = strcmp(a.string->value, str_b->value);
+    string_unref(str_b);
     return result;
   }
   if (a.type != TYPE_STRING && b.type == TYPE_STRING) {
-    VmValue str_a = (VmValue){
-        .type = TYPE_STRING,
-        .string = COERCE_STR(a),
-    };
-    int result = val_cmp(str_a, b);
-    string_unref(str_a.string);
+    VmString *str_a = COERCE_STR(a);
+    int result = strcmp(str_a->value, b.string->value);
+    string_unref(str_a);
     return result;
   }
   if (a.type == TYPE_STRING && b.type == TYPE_STRING) {
