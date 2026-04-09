@@ -9,18 +9,23 @@ def analyze-file [] {
 
 
 def --wrapped main [--enable: list<string> = [], ...args] {
-  let symbols = ls test/tests/*.c
-      | get name
-      | each --flatten { analyze-file }
-      | if ($enable | is-empty) {
-          $in
-        } else {
-          where $it in $enable
-        }
+  let enable_files = $enable | where $it =~ '.*\.c'
+  let enable_symbols = $enable | where $it !~ '.*\.c'
+  let symbols: list<record<symbols: list<string>, file: string>> = glob test/tests/*.c | each --flatten {
+      let IN
+      {
+        symbols: ($IN | analyze-file),
+        file: ($IN | path parse | update parent '' | path join)
+      }
+  }
+  let symbols = if ($enable | is-empty) {
+    $symbols | get symbols | flatten
+  } else {
+    [...($symbols | where file in $enable_files | get symbols), ...($symbols | get symbols | flatten | where $it in $enable_symbols)]
+  }
   let symbols_text = $symbols | each { $"void ($in)\(\);" } | str join "\n"
   let tests_text = $symbols | each { $"  ADD_TEST\(($in)\);" } | str join "\n"
-  let file_contents = $"
-#include <CUnit/Basic.h>
+  let file_contents = $"#include <CUnit/Basic.h>
 #include <CUnit/CUnit.h>
 
 #define ADD_TEST\(m_name\) CU_add_test\(suite, #m_name, m_name\)

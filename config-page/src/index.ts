@@ -10,7 +10,7 @@ import { save, load } from './serialization'
 import { toolbox } from './toolbox'
 import './index.css'
 import * as layers from './layers'
-import { FlyoutItemInfo } from 'blockly/core/utils/toolbox'
+import DarkTheme from '@blockly/theme-dark'
 import * as bytecode from './generators/bytecode'
 
 // Register the blocks and generator with Blockly
@@ -22,7 +22,14 @@ Blockly.serialization.registry.register('layerSerializer', layers.serializer)
 const blocklyDiv = document.getElementById('blocklyDiv')!
 const output = document.getElementById('generatedCode')!
 
-const ws = Blockly.inject(blocklyDiv, { toolbox, renderer: 'zelos' })
+const ws = Blockly.inject(blocklyDiv, { toolbox, renderer: 'zelos', theme: DarkTheme })
+
+const body = document.querySelector('body')
+
+if (body != null) {
+  body.style.setProperty('--bg-color', DarkTheme.getComponentStyle('workspaceBackgroundColour'))
+  body.style.setProperty('--text-color', DarkTheme.getComponentStyle('toolboxForegroundColour'))
+}
 
 function recompile() {
   const blocks = ws.getAllBlocks()

@@ -11,9 +11,13 @@ Bytecode instructions (load = load one value from memory):
 | str    | Pushes a string's pointer to the stack           |
 | stor   | store(var_ref=read, value=pop)                   |
 | load   | push(load(var_ref=read))                         |
+| dup    | c = read, push(peek \* c)                        |
 | jmp    | PC += read                                       |
 | jmpf   | if (pop == fals) PC += read                      |
 | jmpt   | if (pop == true) PC += read                      |
+| jmpa   | PC = pop                                         |
+| inc    | push(pop + 1)                                    |
+| swp    | a = pop, b = pop, push(b), push(a)               |
 | add    | push (pop + pop)                                 |
 | sub    | push (pop - pop)                                 |
 | mul    | push (pop \* pop)                                |

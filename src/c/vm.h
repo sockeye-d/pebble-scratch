@@ -13,9 +13,14 @@ typedef enum {
   OP_STR,
   OP_STOR,
   OP_LOAD,
+  OP_DUP,
   OP_JMP,
   OP_JMPF,
   OP_JMPT,
+  OP_JMPA,
+  OP_DEC,
+  OP_INC,
+  OP_SWP,
   OP_ADD,
   OP_SUB,
   OP_MUL,
@@ -63,6 +68,7 @@ typedef enum {
   TYPE_NUM,
   TYPE_BOOL,
   TYPE_STRING,
+  TYPE_PTR,
 } VmType;
 
 #define MAX_STACK 256
@@ -95,7 +101,8 @@ typedef struct {
     VmNum num;
     bool b;
     VmString *string;
-    int32_t var;
+    uint32_t var;
+    uint32_t ptr;
   };
   VmType type;
 } VmValue;
@@ -103,8 +110,8 @@ typedef struct {
 typedef union {
   VmOp op;
   int32_t num;
-  size_t var;
-  char ch[sizeof(size_t)];
+  uint32_t var;
+  char ch[sizeof(int32_t)];
 } VmInstruction;
 
 typedef struct VmState VmState;
@@ -113,8 +120,8 @@ typedef void (*VmCallHandler)(VmState *state, size_t call_id);
 
 struct VmState {
   VmCallHandler call_handler;
-  size_t pc;
-  size_t stack_ptr;
+  uint32_t pc;
+  uint32_t stack_ptr;
   VmValue vars[MAX_VARS];
   VmValue stack[MAX_STACK];
   VmInstruction *instructions;

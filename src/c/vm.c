@@ -12,12 +12,14 @@
 #define PEEK_INSTRUCTION() (state->instructions[state->pc])
 #define PUSH() (state->stack[++state->stack_ptr])
 #define POP() (state->stack[state->stack_ptr--])
+#define PEEK() (state->stack[state->stack_ptr])
 
 #define COERCE_NUM(m_value) ((m_value).type == TYPE_NUM ? (m_value).num : 0)
 #define COERCE_INT(m_value)                                                    \
   ((m_value).type == TYPE_NUM ? (m_value).num >> VM_NUM_RATIO_L2 : 0)
 #define COERCE_STR(m_value) coerce_str(m_value)
 #define COERCE_BOOL(m_value) coerce_bool(m_value)
+#define COERCE_PTR(m_value) (m_value.ptr)
 #define REF_STACK()                                                            \
   (state->stack[state->stack_ptr].string->refcount == (uint16_t)-1             \
        ? 0                                                                     \
@@ -36,8 +38,8 @@
 size_t mul_by_1_5(size_t value) { return value + (value >> 1); }
 
 VmString *make_string_literal(char *value, size_t *read_length) {
-  size_t length = strlen(value) + 1;
-  *read_length = length;
+  size_t length = strlen(value);
+  *read_length = length + 1; // `read_length` includes the null terminator
   VmString *x = malloc(sizeof(VmString));
   x->length = length;
   x->refcount = -1;
@@ -319,6 +321,18 @@ bool vm_step(VmState *state) {
       REF_STACK();
     }
   } break;
+  case OP_DUP: {
+    int32_t c = READ_INSTRUCTION().var - 1;
+    uint32_t starting_stack_ptr = state->stack_ptr;
+    for (uint32_t stack_i = 0; stack_i <= c; stack_i++) {
+      uint32_t stack_ptr = starting_stack_ptr - c + stack_i;
+      VmValue val = state->stack[stack_ptr];
+      PUSH() = val;
+      if (val.type == TYPE_STRING) {
+        REF_STACK();
+      }
+    }
+  } break;
   case OP_JMP: {
     int32_t jmp_delta = READ_INSTRUCTION().var;
     state->pc += jmp_delta;
@@ -338,6 +352,31 @@ bool vm_step(VmState *state) {
       state->pc += jmp_delta;
     }
     cleanup_val(state, a);
+  } break;
+  case OP_JMPA: {
+    VmValue a = POP();
+    int32_t ptr = COERCE_PTR(a);
+    state->pc = ptr;
+    cleanup_val(state, a);
+  } break;
+    {
+      int32_t offset = VM_NUM_RATIO;
+    case OP_DEC:
+      offset = -offset;
+    case OP_INC:;
+      VmValue a = PEEK();
+      VmNum num = COERCE_NUM(a);
+      state->stack[state->stack_ptr] = (VmValue){
+          .type = TYPE_NUM,
+          .num = num + offset,
+      };
+      cleanup_val(state, a);
+    }
+    break;
+  case OP_SWP: {
+    VmValue top = state->stack[state->stack_ptr];
+    state->stack[state->stack_ptr] = state->stack[state->stack_ptr - 1];
+    state->stack[state->stack_ptr - 1] = top;
   } break;
   case OP_ADD: {
     BINARY_N_OPR(a + b);
@@ -646,8 +685,15 @@ void print_value(VmValue value) {
     }
   } break;
   case TYPE_STRING: {
-    printf("TYPE_STRING=%s, refcount=%u,", value.string->value,
-           value.string->refcount);
+    uint16_t refcount = value.string->refcount;
+    if (refcount == (uint16_t)-1) {
+      printf("TYPE_STRING=%s, refcount=literal,", value.string->value);
+    } else {
+      printf("TYPE_STRING=%s, refcount=%u,", value.string->value, refcount);
+    }
+  } break;
+  case TYPE_PTR: {
+    printf("TYPE_PTR=%u", value.ptr);
   } break;
   }
 }
@@ -664,12 +710,22 @@ const char *print_instruction(VmInstruction instruction) {
     return "OP_STOR";
   case OP_LOAD:
     return "OP_LOAD";
+  case OP_DUP:
+    return "OP_DUP";
   case OP_JMP:
     return "OP_JMP";
   case OP_JMPF:
     return "OP_JMPF";
   case OP_JMPT:
     return "OP_JMPT";
+  case OP_DEC:
+    return "OP_DEC";
+  case OP_INC:
+    return "OP_INC";
+  case OP_SWP:
+    return "OP_SWP";
+  case OP_JMPA:
+    return "OP_JMPA";
   case OP_ADD:
     return "OP_ADD";
   case OP_SUB:
@@ -755,24 +811,24 @@ const char *print_instruction(VmInstruction instruction) {
 }
 
 void vm_print_state(VmState *state) {
-  printf("PC = %zu\nsp = %d\n", state->pc, (int32_t)state->stack_ptr);
-  if (state->stack_ptr == (size_t)-1) {
+  printf("PC = %u\nsp = %d\n", state->pc, (int32_t)state->stack_ptr);
+  if (state->stack_ptr == (int32_t)-1) {
     printf("no stack yet\n");
   } else {
-    for (size_t i = 0; i <= state->stack_ptr; i++) {
+    for (int32_t i = 0; i <= state->stack_ptr; i++) {
       if (i >= MAX_STACK) {
         printf("Stack overflow!\n");
         break;
       }
-      printf("%zu = ", i);
+      printf("%d = ", i);
       print_value(state->stack[i]);
       printf("\n");
     }
   }
-  size_t var_i = -1;
+  int32_t var_i = -1;
   VmValue var;
   while ((var = state->vars[++var_i]).type != TYPE_NIL) {
-    printf("var %zu = ", var_i);
+    printf("var %d = ", var_i);
     print_value(var);
     printf("\n");
   }

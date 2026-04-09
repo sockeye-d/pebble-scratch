@@ -1,65 +1,16 @@
 import * as blockly from 'blockly'
-
-export enum VmOp {
-  Nop,
-  Num,
-  Str,
-  Stor,
-  Load,
-  Jmp,
-  Jmpf,
-  Jmpt,
-  Add,
-  Sub,
-  Mul,
-  Div,
-  Mod,
-  Neq,
-  Eq,
-  Lt,
-  Lte,
-  Gt,
-  Gte,
-  And,
-  Or,
-  Not,
-  Sqrt,
-  Abs,
-  Neg,
-  Log2,
-  Pow2,
-  Min,
-  Max,
-  Clamp,
-  Rond,
-  Flor,
-  Ceil,
-  Sin,
-  Cos,
-  At2,
-  Cat,
-  Substr,
-  Subst,
-  Find,
-  Has,
-  Len,
-  Fmt,
-  Print,
-  Call,
-  True,
-  Fals,
-  Eof,
-}
+import { VmOp } from './opcodes'
+import * as ops from './ops'
 
 export type VmInstruction =
   | { type: 'nil'; info: string }
   | { type: 'op'; op: VmOp }
   | { type: 'num'; num: number }
   | { type: 'var'; var: VarRef }
-  | { type: 'str'; chars: [number, number, number, number, number, number, number, number] }
+  | { type: 'str'; chars: [number, number, number, number] }
 
-type VarID = string
-type VarRef = number
+export type VarID = string
+export type VarRef = number
 
 export class Compiler {
   private nextRef: VarRef = 0
@@ -81,7 +32,9 @@ export class Compiler {
   private compileSingle(block: blockly.Block): VmInstruction[] {
     const compilerFun = blockCompilers[block.type]
     if (compilerFun == undefined) {
-      return [{ type: 'nil', info: block.type }]
+      console.log(block.inputList)
+      console.log([...block.getFields()])
+      return ops.nil(block.type)
     }
     return compilerFun(this, block)
   }
@@ -102,17 +55,17 @@ export function disassemble(instructions: VmInstruction[]): string {
     .map((e) => {
       switch (e.type) {
         case 'op':
-          return `op  ${VmOp[e.op]}`
+          return `${VmOp[e.op]}`
         case 'str':
           const codepoint = e.chars.map((e) => e.toLocaleString(undefined, { minimumIntegerDigits: 3 }))
           const string = e.chars.map((e) => String.fromCharCode(e)).join('')
-          return `str ${codepoint} (${string})`
+          return `- str ${codepoint} (${string})`
         case 'var':
-          return `var ${e.var}`
+          return `- var ${e.var}`
         case 'num':
-          return `num ${e.num}`
+          return `- num ${e.num}`
         case 'nil':
-          return `nil ${e.info}`
+          return `- nil ${e.info}`
       }
     })
     .join('\n')
@@ -125,11 +78,19 @@ const blockCompilers: Record<string, ((compiler: Compiler, block: blockly.Block)
       FALSE: VmOp.Fals,
     }
     return [
-      {
+      <VmInstruction>{
         type: 'op',
         op: OPS[block.getFieldValue('BOOL')],
       },
     ]
+  },
+  controls_repeat_ext: (compiler, block) => {
+    const times = block.getInputTargetBlock('TIMES')!
+    const timesBytecode = compiler.compile(times)
+    const inner = block.getInputTargetBlock('DO')
+    const innerBytecode = inner == null ? [] : compiler.compile(inner)
+    const bytecode = [...innerBytecode, ...ops.op(VmOp.Dec), ...ops.dup(), ...ops.num(0), ...ops.op(VmOp.Lt)]
+    return [...timesBytecode, ...bytecode, ...ops.jmp(-2 - bytecode.length)]
   },
   controls_whileUntil: (compiler, block) => {
     const OPS: Record<string, VmOp> = {
@@ -139,7 +100,7 @@ const blockCompilers: Record<string, ((compiler: Compiler, block: blockly.Block)
     const mode = block.getFieldValue('MODE')
     const condition = block.getInputTargetBlock('BOOL')
     const inner = block.getInputTargetBlock('DO')
-    const innerBytecode = inner == null ? [<VmInstruction>{ type: 'op', op: VmOp.Nop }] : compiler.compile(inner)
+    const innerBytecode = inner == null ? [] : compiler.compile(inner)
     const exit: VmInstruction[] = [
       {
         type: 'op',
@@ -168,15 +129,15 @@ const blockCompilers: Record<string, ((compiler: Compiler, block: blockly.Block)
     const neededLength = text.length + 1
     let result: VmInstruction[] = []
     for (let i = 0; i < neededLength; i++) {
-      if (i % 8 == 0) {
-        result.push({ type: 'str', chars: [0, 0, 0, 0, 0, 0, 0, 0] })
+      if (i % 4 == 0) {
+        result.push({ type: 'str', chars: [0, 0, 0, 0] })
       }
-      const code = i < text.length ? text.charCodeAt(i) : 0
+      const charCode = i < text.length ? text.charCodeAt(i) : 0
       const top = result[result.length - 1]
       if (top.type != 'str') {
         continue
       }
-      top.chars[i % 8] = code
+      top.chars[i % 4] = charCode
     }
     return result
   },

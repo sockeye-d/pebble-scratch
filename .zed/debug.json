@@ -8,7 +8,7 @@
     "adapter": "CodeLLDB",
     "program": "build/test_exe",
     "request": "launch",
-    "build": { "command": "./build_test.nu", "args": ["-g", "-O0"] },
-    // "build": { "command": "./build_test.nu", "args": ["--enable", "[trig_test_atan_large]", "-g", "-O0"] },
+    // "build": { "command": "./build_test.nu", "args": ["-g", "-O0"] },
+    "build": { "command": "./build_test.nu", "args": ["--enable", "[string_dup_test]", "-g", "-O0"] },
   },
 ]

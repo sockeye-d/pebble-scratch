@@ -61,13 +61,20 @@ export const toolbox: ToolboxDefinition = {
           kind: 'block',
           type: 'logic_boolean',
         },
-      ],
-    },
-    {
-      kind: 'category',
-      name: 'Loops',
-      categorystyle: 'loop_category',
-      contents: [
+        {
+          kind: 'block',
+          type: 'controls_repeat_ext',
+          inputs: {
+            TIMES: {
+              shadow: {
+                type: 'math_number',
+                fields: {
+                  NUM: 67,
+                },
+              },
+            },
+          },
+        },
         {
           kind: 'block',
           type: 'controls_whileUntil',
@@ -77,36 +84,6 @@ export const toolbox: ToolboxDefinition = {
                 type: 'logic_boolean',
                 fields: {
                   BOOL: 'TRUE',
-                },
-              },
-            },
-          },
-        },
-        {
-          kind: 'block',
-          type: 'controls_for',
-          inputs: {
-            FROM: {
-              shadow: {
-                type: 'math_number',
-                fields: {
-                  NUM: 1,
-                },
-              },
-            },
-            TO: {
-              shadow: {
-                type: 'math_number',
-                fields: {
-                  NUM: 10,
-                },
-              },
-            },
-            BY: {
-              shadow: {
-                type: 'math_number',
-                fields: {
-                  NUM: 1,
                 },
               },
             },

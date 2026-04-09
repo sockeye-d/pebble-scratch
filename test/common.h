@@ -49,6 +49,14 @@
     .var = m_delta,                                                            \
   }
 
+#define MK_OP_DUP(m_count)                                                     \
+  (VmInstruction){                                                             \
+      .op = OP_DUP,                                                            \
+  },                                                                           \
+      (VmInstruction) {                                                        \
+    .var = m_count,                                                            \
+  }
+
 #define MK_OP(m_op)                                                            \
   (VmInstruction) { .op = m_op }
 
@@ -65,6 +73,7 @@
   } while (vm_step(&state))
 
 #define STACK(m_delta) (state.stack[state.stack_ptr - m_delta])
+#define STACK_ABS(m_frame) (state.stack[m_frame])
 #define VAR(m_var_ref) (state.vars[m_var_ref])
 
 inline bool __attribute__((__always_inline__)) is_equal_approx(VmNum a,
