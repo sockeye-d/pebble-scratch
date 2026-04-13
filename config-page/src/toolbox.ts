@@ -1,18 +1,4 @@
-/**
- * @license
- * Copyright 2023 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import { ToolboxDefinition } from 'blockly/core/utils/toolbox'
-
-/*
-This toolbox contains nearly every single built-in block that Blockly offers,
-in addition to the custom block 'add_text' this sample app adds.
-You probably don't need every single block, and should consider either rewriting
-your toolbox from scratch, or carefully choosing whether you need each block
-listed here.
-*/
 
 export const toolbox: ToolboxDefinition = {
   kind: 'categoryToolbox',
@@ -34,12 +20,16 @@ export const toolbox: ToolboxDefinition = {
           kind: 'block',
           type: 'events_on_tapped',
         },
+        {
+          kind: 'block',
+          type: 'events_on_time_change',
+        },
       ],
     },
     {
       kind: 'category',
-      name: 'Logic',
-      categorystyle: 'logic_category',
+      name: 'Controls',
+      categorystyle: 'controls_category',
       contents: [
         {
           kind: 'block',
@@ -47,7 +37,7 @@ export const toolbox: ToolboxDefinition = {
           inputs: {
             CONDITION: {
               shadow: {
-                type: 'logic_boolean',
+                type: 'logic_boolean_yellow',
                 fields: {
                   BOOL: 'FALSE',
                 },
@@ -61,7 +51,7 @@ export const toolbox: ToolboxDefinition = {
           inputs: {
             CONDITION: {
               shadow: {
-                type: 'logic_boolean',
+                type: 'logic_boolean_yellow',
                 fields: {
                   BOOL: 'FALSE',
                 },
@@ -69,6 +59,27 @@ export const toolbox: ToolboxDefinition = {
             },
           },
         },
+        {
+          kind: 'block',
+          type: 'controls_wait',
+          inputs: {
+            SECONDS: {
+              shadow: {
+                type: 'math_number',
+                fields: {
+                  NUM: '67',
+                },
+              },
+            },
+          },
+        },
+      ],
+    },
+    {
+      kind: 'category',
+      name: 'Logic',
+      categorystyle: 'logic_category',
+      contents: [
         {
           kind: 'block',
           type: 'logic_compare',
@@ -298,6 +309,70 @@ export const toolbox: ToolboxDefinition = {
       ],
     },
     {
+      kind: 'category',
+      name: 'Time',
+      categorystyle: 'time_category',
+      contents: [
+        {
+          kind: 'block',
+          type: 'time_wall_time',
+        },
+        {
+          kind: 'block',
+          type: 'time_time_24h',
+        },
+        {
+          kind: 'block',
+          type: 'time_time',
+        },
+      ],
+    },
+    {
+      kind: 'category',
+      name: 'Sensors',
+      categorystyle: 'sensors_category',
+      contents: [
+        {
+          kind: 'block',
+          type: 'sensors_accelerometer',
+        },
+        {
+          kind: 'block',
+          type: 'sensors_battery',
+        },
+        {
+          kind: 'block',
+          type: 'sensors_battery_state',
+        },
+        {
+          kind: 'block',
+          type: 'sensors_phone_connected',
+        },
+        {
+          kind: 'block',
+          type: 'sensors_current_watch_model',
+        },
+        {
+          kind: 'block',
+          type: 'sensors_watch_model',
+          fields: {
+            MODEL: 'PEBBLE_TIME',
+          },
+        },
+        {
+          kind: 'block',
+          type: 'sensors_current_watch_color',
+        },
+        {
+          kind: 'block',
+          type: 'sensors_watch_color',
+          fields: {
+            COLOR: 'WATCH_INFO_COLOR_TIME_STEEL_GOLD',
+          },
+        },
+      ],
+    },
+    {
       kind: 'sep',
     },
     {
@@ -309,7 +384,7 @@ export const toolbox: ToolboxDefinition = {
     {
       kind: 'category',
       name: 'Layers',
-      categorystyle: 'variable_category',
+      categorystyle: 'layers_category',
       custom: 'LAYER',
     },
     {

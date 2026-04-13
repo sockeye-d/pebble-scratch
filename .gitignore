@@ -4,3 +4,4 @@ node_modules/
 compile_commands.json
 .lock-waf*
 test_exe
+src/c/pebble_foreign_funcs_gen

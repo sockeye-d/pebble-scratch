@@ -48,8 +48,9 @@ export enum VmOp {
   Len,
   Fmt,
   Print,
-  Call,
+  CallForeign,
   True,
   Fals,
+  Sus,
   Eof,
 }

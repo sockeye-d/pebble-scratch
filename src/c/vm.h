@@ -5,7 +5,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#pragma once
+typedef enum {
+  STEP_RESULT_DONE,
+  STEP_RESULT_CONTINUE,
+  STEP_RESULT_SUSPEND,
+} VmStepResult;
 
 typedef enum {
   OP_NOP,
@@ -57,9 +61,10 @@ typedef enum {
   OP_LEN,
   OP_FMT,
   OP_PRINT,
-  OP_CALL,
+  OP_CALL_FOREIGN,
   OP_TRUE,
   OP_FALS,
+  OP_SUS,
   OP_EOF,
 } VmOp;
 
@@ -116,7 +121,7 @@ typedef union {
 
 typedef struct VmState VmState;
 
-typedef void (*VmCallHandler)(VmState *state, size_t call_id);
+typedef void (*VmCallHandler)(VmState *state, int32_t call_id);
 
 struct VmState {
   VmCallHandler call_handler;
@@ -127,7 +132,7 @@ struct VmState {
   VmInstruction *instructions;
 };
 
-bool vm_step(VmState *state);
+VmStepResult vm_step(VmState *state);
 void vm_print_state(VmState *state);
 
 #endif

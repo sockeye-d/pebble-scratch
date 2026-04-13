@@ -42,7 +42,7 @@ void cmp_string_lt_test() {
 void cmp_num_test() {
   VmInstruction instructions[] = {
       MK_OP_NUM(5.0),
-      MK_OP_STR(6.0),
+      MK_OP_NUM(6.0),
       MK_OP(OP_GT),
       (VmInstruction){
           .op = OP_EOF,

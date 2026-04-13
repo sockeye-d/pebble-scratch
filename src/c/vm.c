@@ -262,10 +262,10 @@ int val_cmp(VmValue a, VmValue b) {
   if (a.type == TYPE_STRING && b.type == TYPE_STRING) {
     return strcmp(a.string->value, b.string->value);
   }
-  if (a.num < 0) {
+  if (a.num < b.num) {
     return -1;
   }
-  if (b.num > 0) {
+  if (a.num > b.num) {
     return 1;
   }
   return 0;
@@ -327,7 +327,7 @@ int val_cmp(VmValue a, VmValue b) {
     cleanup_val(state, _b);                                                    \
   } while (false)
 
-bool vm_step(VmState *state) {
+VmStepResult vm_step(VmState *state) {
   VmInstruction op = READ_INSTRUCTION();
   switch (op.op) {
   case OP_NOP: {
@@ -700,11 +700,12 @@ bool vm_step(VmState *state) {
         .b = false,
     };
   } break;
-  case OP_EOF: {
-    return false;
-  } break;
+  case OP_SUS:
+    return STEP_RESULT_SUSPEND;
+  case OP_EOF:
+    return STEP_RESULT_DONE;
   }
-  return true;
+  return STEP_RESULT_CONTINUE;
 }
 
 void print_value(VmValue value) {

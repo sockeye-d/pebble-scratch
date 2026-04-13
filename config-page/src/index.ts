@@ -5,30 +5,46 @@
  */
 
 import * as Blockly from 'blockly'
-import { blocks } from './blocks/blocks'
+import * as core from './blocks/core_blocks'
+import * as pebble from './blocks/pebble_blocks'
 import { save, load } from './serialization'
 import { toolbox } from './toolbox'
 import './index.css'
 import * as layers from './layers'
 import DarkTheme from '@blockly/theme-dark'
 import * as bytecode from './generators/bytecode'
-
+import * as _ from 'lodash'
 // Register the blocks and generator with Blockly
-Blockly.common.defineBlocks(blocks)
+Blockly.common.defineBlocks(core.blocks)
+Blockly.common.defineBlocks(pebble.blocks)
 Blockly.common.defineBlocks(layers.blocks)
 Blockly.serialization.registry.register('layerSerializer', layers.serializer)
+
+const theme = Blockly.Theme.defineTheme('theme', {
+  name: 'theme',
+  base: DarkTheme,
+  categoryStyles: {
+    events_category: { colour: '10' },
+    controls_category: { colour: '45' },
+    layers_category: { colour: '60' },
+    time_category: { colour: '250' },
+    sensors_category: { colour: '280' },
+  },
+})
+
+console.log(theme)
 
 // Set up UI elements and inject Blockly
 const blocklyDiv = document.getElementById('blocklyDiv')!
 const output = document.getElementById('generatedCode')!
 
-const ws = Blockly.inject(blocklyDiv, { toolbox, renderer: 'zelos', theme: DarkTheme })
+const ws = Blockly.inject(blocklyDiv, { toolbox, renderer: 'zelos', theme: theme })
 
 const body = document.querySelector('body')
 
 if (body != null) {
-  body.style.setProperty('--bg-color', DarkTheme.getComponentStyle('workspaceBackgroundColour'))
-  body.style.setProperty('--text-color', DarkTheme.getComponentStyle('toolboxForegroundColour'))
+  body.style.setProperty('--bg-color', theme.getComponentStyle('workspaceBackgroundColour'))
+  body.style.setProperty('--text-color', theme.getComponentStyle('toolboxForegroundColour'))
 }
 
 function recompile() {

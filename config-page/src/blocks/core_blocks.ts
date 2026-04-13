@@ -1,59 +1,4 @@
-/**
- * @license
- * Copyright 2023 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import * as Blockly from 'blockly/core'
-
-const events_main = {
-  type: 'events_main',
-  message0: 'Main %1 %2',
-  args0: [
-    { type: 'input_dummy' },
-    {
-      type: 'input_statement',
-      name: 'CONTENT',
-    },
-  ],
-  colour: 30,
-}
-
-const events_on_button_pressed = {
-  type: 'events_on_button_pressed',
-  message0: 'On %2 button pressed %1 %3',
-  args0: [
-    { type: 'input_dummy' },
-    {
-      type: 'field_dropdown',
-      name: 'BUTTON',
-      options: [
-        ['back', 'BACK'],
-        ['top', 'TOP'],
-        ['middle', 'MIDDLE'],
-        ['bottom', 'BOTTOM'],
-      ],
-    },
-    {
-      type: 'input_statement',
-      name: 'CONTENT',
-    },
-  ],
-  colour: 30,
-}
-
-const events_on_tapped = {
-  type: 'events_on_tapped',
-  message0: 'On tapped %1 %2',
-  args0: [
-    { type: 'input_dummy' },
-    {
-      type: 'input_statement',
-      name: 'CONTENT',
-    },
-  ],
-  colour: 30,
-}
 
 const controls_if = {
   type: 'controls_if',
@@ -74,7 +19,7 @@ const controls_if = {
   ],
   previousStatement: null,
   nextStatement: null,
-  colour: 210,
+  colour: 45,
 }
 
 const controls_if_else = {
@@ -104,7 +49,24 @@ const controls_if_else = {
   ],
   previousStatement: null,
   nextStatement: null,
-  colour: 210,
+  colour: 45,
+}
+
+const logic_boolean_yellow = {
+  type: 'logic_boolean_yellow',
+  message0: '%1',
+  args0: [
+    {
+      type: 'field_dropdown',
+      name: 'BOOL',
+      options: [
+        ['true', 'TRUE'],
+        ['false', 'FALSE'],
+      ],
+    },
+  ],
+  output: 'Boolean',
+  colour: 45,
 }
 
 const math_unary = {
@@ -226,15 +188,10 @@ const text_find = {
   colour: 160,
 }
 
-// Create the block definitions for the JSON-only blocks.
-// This does not register their definitions with Blockly.
-// This file has no side effects!
 export const blocks = Blockly.common.createBlockDefinitionsFromJsonArray([
-  events_on_button_pressed,
-  events_main,
-  events_on_tapped,
   controls_if,
   controls_if_else,
+  logic_boolean_yellow,
   math_unary,
   math_binary,
   math_constant,
