@@ -14,6 +14,10 @@ export function num(num: number) {
   return [...op(VmOp.Num), <VmInstruction>{ type: 'num', num }]
 }
 
+export function raw(num: number) {
+  return [<VmInstruction>{ type: 'raw', num }]
+}
+
 export function ref(ref: number) {
   return [<VmInstruction>{ type: 'var', var: ref }]
 }
@@ -72,6 +76,6 @@ export function str(text: string) {
   return [...op(VmOp.Str), ...result]
 }
 
-export function call(fn: PebbleForeignFunc) {
-  return [...op(VmOp.CallForeign), ...ref(fn)]
+export function call(fun: PebbleForeignFunc) {
+  return [...op(VmOp.CallForeign), <VmInstruction>{ type: 'fun', fun }]
 }

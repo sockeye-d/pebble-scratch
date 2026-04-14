@@ -5,6 +5,7 @@
 
 #include <CUnit/Basic.h>
 #include <CUnit/CUnit.h>
+#include <stdlib.h>
 
 #define MK_OP_NUM(m_number)                                                    \
   (VmInstruction){                                                             \
@@ -61,10 +62,11 @@
   (VmInstruction) { .op = m_op }
 
 #define RUN_VM()                                                               \
+  VmValue *__vars = (VmValue *)alloca(sizeof(VmValue) * MAX_VARS);             \
   VmState state = {                                                            \
       .pc = 0,                                                                 \
       .stack_ptr = -1,                                                         \
-      .vars = {},                                                              \
+      .vars = __vars,                                                          \
       .stack = {},                                                             \
       .instructions = instructions,                                            \
   };                                                                           \

@@ -25,6 +25,8 @@ export const compilers: Record<string, BlockCompiler> = {
       ...elBytecode,
     ]
   },
+  controls_atomically: (compiler, block) =>
+    compiler.atomically(() => compiler.compile(block.getInputTargetBlock('DO')!)),
   logic_boolean: (_compiler, block) => ops.bool(block.getFieldValue('BOOL') == 'TRUE'),
   logic_boolean_yellow: (_compiler, block) => ops.bool(block.getFieldValue('BOOL') == 'TRUE'),
   logic_compare: (compiler, block) => {

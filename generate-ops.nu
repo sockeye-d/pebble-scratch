@@ -1,7 +1,7 @@
 #!/usr/bin/nu
 
 def parse [path: path] {
-  clang -Xclang -ast-dump=json -fsyntax-only $path | from json
+  clang -DAST_DUMP -Xclang -ast-dump=json -fsyntax-only $path | from json
 }
 
 def generate-ops [--output-file: path] {
@@ -16,11 +16,11 @@ def generate-ffi [--output-file: path] {
   # parse src/c/pebble_foreign_funcs.c | explore
   let funcs = parse src/c/pebble_foreign_funcs.c
       | get inner
-      | where kind == FunctionDecl and loc.includedFrom? == null and loc.expansionLoc? == null and storageClass? != static
+      | where kind == FunctionDecl and loc.includedFrom? == null and storageClass? != static
       | get name
   $"export enum PebbleForeignFunc {\n($funcs | str pascal-case | each { '  ' + $in } | str join ",\n"),\n}"
       | save --force $output_file
-  $"void \(*const handlers[]\)\(VmState *state\) = {\n($funcs | each { '  ' + $in } | str join ",\n"),\n};"
+  $"void \(*const handlers[]\)\(VmState *state\) = {\n($funcs | each { '  ' + $in } | str join ",\n")\n};"
       | save --force src/c/pebble_foreign_funcs_gen
 }
 

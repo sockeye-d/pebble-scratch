@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2023 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import * as Blockly from 'blockly'
 import * as core from './blocks/core_blocks'
 import * as pebble from './blocks/pebble_blocks'
@@ -13,8 +7,7 @@ import './index.css'
 import * as layers from './layers'
 import DarkTheme from '@blockly/theme-dark'
 import * as bytecode from './generators/bytecode'
-import * as _ from 'lodash'
-// Register the blocks and generator with Blockly
+
 Blockly.common.defineBlocks(core.blocks)
 Blockly.common.defineBlocks(pebble.blocks)
 Blockly.common.defineBlocks(layers.blocks)

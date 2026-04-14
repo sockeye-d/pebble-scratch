@@ -101,6 +101,10 @@ export const toolbox: ToolboxDefinition = {
             },
           },
         },
+        {
+          kind: 'block',
+          type: 'controls_atomically',
+        },
       ],
     },
     {

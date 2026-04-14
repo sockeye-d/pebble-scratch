@@ -99,6 +99,15 @@ const controls_while = {
   colour: 45,
 }
 
+const controls_atomically = {
+  type: 'controls_atomically',
+  message0: 'do instantly %1 %2',
+  args0: [{ type: 'input_dummy' }, { type: 'input_statement', name: 'DO' }],
+  previousStatement: null,
+  nextStatement: null,
+  colour: 45,
+}
+
 const logic_boolean_yellow = {
   type: 'logic_boolean_yellow',
   message0: '%1',
@@ -239,6 +248,7 @@ export const blocks = Blockly.common.createBlockDefinitionsFromJsonArray([
   controls_if,
   controls_if_else,
   controls_repeat,
+  controls_atomically,
   controls_while,
   logic_boolean_yellow,
   math_unary,

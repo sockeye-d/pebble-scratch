@@ -127,7 +127,7 @@ struct VmState {
   VmCallHandler call_handler;
   uint32_t pc;
   uint32_t stack_ptr;
-  VmValue vars[MAX_VARS];
+  VmValue *vars;
   VmValue stack[MAX_STACK];
   VmInstruction *instructions;
 };

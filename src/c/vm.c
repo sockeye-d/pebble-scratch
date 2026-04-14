@@ -38,8 +38,6 @@
     }                                                                          \
   } while (false)
 
-size_t mul_by_1_5(size_t value) { return value + (value >> 1); }
-
 VmString *make_string_literal(char *value, size_t *read_length) {
   size_t length = strlen(value);
   *read_length = length + 1; // `read_length` includes the null terminator
@@ -875,7 +873,7 @@ void vm_print_state(VmState *state) {
   }
   int32_t var_i = -1;
   VmValue var;
-  while ((var = state->vars[++var_i]).type != TYPE_NIL) {
+  while (var_i < MAX_VARS && (var = state->vars[++var_i]).type != TYPE_NIL) {
     printf("var %d = ", var_i);
     print_value(var);
     printf("\n");
