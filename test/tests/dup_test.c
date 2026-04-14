@@ -24,9 +24,9 @@ void string_dup_test() {
   };
   RUN_VM();
   CU_ASSERT_STRING_EQUAL("ABC", STACK_ABS(0).string->value);
-  CU_ASSERT_STRING_EQUAL("abcABC", STACK_ABS(1).string->value);
+  CU_ASSERT_STRING_EQUAL("ABCabc", STACK_ABS(1).string->value);
   CU_ASSERT_STRING_EQUAL("ABC", STACK_ABS(2).string->value);
-  CU_ASSERT_STRING_EQUAL("abcABC", STACK_ABS(3).string->value);
+  CU_ASSERT_STRING_EQUAL("ABCabc", STACK_ABS(3).string->value);
 }
 
 void loop_with_dup_test() {

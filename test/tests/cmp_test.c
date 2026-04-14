@@ -15,8 +15,8 @@ void cmp_string_test() {
 
 void cmp_string_neq_test() {
   VmInstruction instructions[] = {
-      MK_OP_STR('A', 'B', 'C', '\0'),
       MK_OP_STR('a', 'b', 'c', '\0'),
+      MK_OP_STR('A', 'B', 'C', '\0'),
       MK_OP(OP_NEQ),
       (VmInstruction){
           .op = OP_EOF,
@@ -28,8 +28,8 @@ void cmp_string_neq_test() {
 
 void cmp_string_lt_test() {
   VmInstruction instructions[] = {
-      MK_OP_STR('0', '\0'),
       MK_OP_STR('9', '\0'),
+      MK_OP_STR('0', '\0'),
       MK_OP(OP_LT),
       (VmInstruction){
           .op = OP_EOF,
@@ -41,8 +41,8 @@ void cmp_string_lt_test() {
 
 void cmp_num_test() {
   VmInstruction instructions[] = {
-      MK_OP_NUM(5.0),
       MK_OP_NUM(6.0),
+      MK_OP_NUM(5.0),
       MK_OP(OP_GT),
       (VmInstruction){
           .op = OP_EOF,
@@ -54,8 +54,8 @@ void cmp_num_test() {
 
 void cmp_heterogenous_test() {
   VmInstruction instructions[] = {
-      MK_OP_NUM(5.0),
       MK_OP_STR('5', '.', '0', '\0'),
+      MK_OP_NUM(5.0),
       MK_OP(OP_EQ),
       (VmInstruction){
           .op = OP_EOF,

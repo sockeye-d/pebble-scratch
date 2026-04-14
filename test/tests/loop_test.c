@@ -18,8 +18,8 @@ void loop_test() {
       MK_OP_STOR(I),
 
       // L3.
-      MK_OP_NUM(10),
       MK_OP_LOAD(I),
+      MK_OP_NUM(10),
       MK_OP(OP_LT),
       MK_OP_JMP(-17, T),
       (VmInstruction){

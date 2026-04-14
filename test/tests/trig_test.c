@@ -50,8 +50,8 @@ void trig_test_cos_large() {
 
 void trig_test_atan() {
   VmInstruction instructions[] = {
-      MK_OP_NUM(10.0),
       MK_OP_NUM(5.0),
+      MK_OP_NUM(10.0),
       MK_OP(OP_AT2),
       (VmInstruction){
           .op = OP_EOF,
@@ -63,8 +63,8 @@ void trig_test_atan() {
 
 void trig_test_atan_large() {
   VmInstruction instructions[] = {
-      MK_OP_NUM(1000.0),
       MK_OP_NUM(500.0),
+      MK_OP_NUM(1000.0),
       MK_OP(OP_AT2),
       (VmInstruction){
           .op = OP_EOF,

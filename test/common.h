@@ -1,6 +1,8 @@
 #ifndef __TEST_COMMON_H
 #define __TEST_COMMON_H
 
+// #define TEST_PRINT
+
 #include "../src/c/vm.h"
 
 #include <CUnit/Basic.h>
@@ -61,6 +63,12 @@
 #define MK_OP(m_op)                                                            \
   (VmInstruction) { .op = m_op }
 
+#ifdef TEST_PRINT
+#define __PRINT vm_print_state(&state);
+#else
+#define __PRINT
+#endif
+
 #define RUN_VM()                                                               \
   VmValue *__vars = (VmValue *)alloca(sizeof(VmValue) * MAX_VARS);             \
   VmState state = {                                                            \
@@ -71,7 +79,7 @@
       .instructions = instructions,                                            \
   };                                                                           \
   do {                                                                         \
-    vm_print_state(&state);                                                    \
+    __PRINT;                                                                   \
   } while (vm_step(&state))
 
 #define STACK(m_delta) (state.stack[state.stack_ptr - m_delta])

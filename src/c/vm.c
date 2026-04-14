@@ -249,8 +249,8 @@ int val_cmp(VmValue a, VmValue b) {
  */
 #define BINARY_OPR(...)                                                        \
   do {                                                                         \
-    VmValue a = POP();                                                         \
     VmValue b = POP();                                                         \
+    VmValue a = POP();                                                         \
     VmValue result = (__VA_ARGS__);                                            \
     PUSH() = result;                                                           \
     cleanup_val(state, a);                                                     \
@@ -262,8 +262,8 @@ int val_cmp(VmValue a, VmValue b) {
  */
 #define BINARY_N_OPR(m_operation)                                              \
   do {                                                                         \
-    VmValue _a = POP();                                                        \
     VmValue _b = POP();                                                        \
+    VmValue _a = POP();                                                        \
     VmNum a = COERCE_NUM(_a);                                                  \
     VmNum b = COERCE_NUM(_b);                                                  \
     VmNum result = (m_operation);                                              \
@@ -277,8 +277,8 @@ int val_cmp(VmValue a, VmValue b) {
  */
 #define BINARY_B_OPR(m_operation)                                              \
   do {                                                                         \
-    VmValue _a = POP();                                                        \
     VmValue _b = POP();                                                        \
+    VmValue _a = POP();                                                        \
     bool a = COERCE_BOOL(_a);                                                  \
     bool b = COERCE_BOOL(_b);                                                  \
     PUSH() = (VmValue){.type = TYPE_BOOL, .b = m_operation};                   \
@@ -291,8 +291,8 @@ int val_cmp(VmValue a, VmValue b) {
  */
 #define BINARY_NB_OPR(m_operation)                                             \
   do {                                                                         \
-    VmValue _a = POP();                                                        \
     VmValue _b = POP();                                                        \
+    VmValue _a = POP();                                                        \
     VmNum a = COERCE_NUM(_a);                                                  \
     VmNum b = COERCE_NUM(_b);                                                  \
     PUSH() = (VmValue){.type = TYPE_BOOL, .b = m_operation};                   \
@@ -486,8 +486,8 @@ VmStepResult vm_step(VmState *state) {
     BINARY_N_OPR(a > b ? a : b);
   } break;
   case OP_CLAMP: {
-    VmValue _a = POP();
     VmValue _b = POP();
+    VmValue _a = POP();
     VmValue _c = POP();
     VmNum a = COERCE_NUM(_a);
     VmNum min = COERCE_NUM(_b);
@@ -546,8 +546,8 @@ VmStepResult vm_step(VmState *state) {
     cleanup_val(state, _a);
   } break;
   case OP_AT2: {
-    VmValue _a = POP();
     VmValue _b = POP();
+    VmValue _a = POP();
     VmNum x = COERCE_NUM(_a);
     VmNum y = COERCE_NUM(_b);
     // atan2_lookup accepts 16-bit values, so if the numbers are larger than
@@ -564,8 +564,8 @@ VmStepResult vm_step(VmState *state) {
     cleanup_val(state, _b);
   } break;
   case OP_CAT: {
-    VmValue _a = POP();
     VmValue _b = POP();
+    VmValue _a = POP();
     VmString *a = COERCE_STR(_a);
     VmString *b = COERCE_STR(_b);
     PUSH() = (VmValue){.type = TYPE_STRING,
@@ -575,8 +575,8 @@ VmStepResult vm_step(VmState *state) {
     cleanup_val(state, _b);
   } break;
   case OP_SUBSTR: {
-    VmValue _a = POP();
     VmValue _b = POP();
+    VmValue _a = POP();
     VmValue _c = POP();
     VmString *str = COERCE_STR(_a);
     int32_t start = COERCE_INT(_b);
@@ -591,8 +591,8 @@ VmStepResult vm_step(VmState *state) {
     cleanup_val(state, _c);
   } break;
   case OP_SUBST: {
-    VmValue _a = POP();
     VmValue _b = POP();
+    VmValue _a = POP();
     VmValue _c = POP();
     VmString *str = COERCE_STR(_a);
     VmString *what = COERCE_STR(_b);
@@ -607,8 +607,8 @@ VmStepResult vm_step(VmState *state) {
     cleanup_val(state, _c);
   } break;
   case OP_FIND: {
-    VmValue _a = POP();
     VmValue _b = POP();
+    VmValue _a = POP();
     VmString *str = COERCE_STR(_a);
     VmString *subject = COERCE_STR(_b);
     PUSH() = (VmValue){
@@ -619,8 +619,8 @@ VmStepResult vm_step(VmState *state) {
     cleanup_val(state, _b);
   } break;
   case OP_HAS: {
-    VmValue _a = POP();
     VmValue _b = POP();
+    VmValue _a = POP();
     VmString *str = COERCE_STR(_a);
     VmString *subject = COERCE_STR(_b);
     PUSH() = (VmValue){
@@ -640,8 +640,8 @@ VmStepResult vm_step(VmState *state) {
     cleanup_val(state, _a);
   } break;
   case OP_FMT: {
-    VmValue _a = POP();
     VmValue _b = POP();
+    VmValue _a = POP();
     double num = NUM_AS_DOUBL(COERCE_NUM(_a));
     int32_t decimal_places = COERCE_INT(_b);
     PUSH() = (VmValue){

@@ -12,5 +12,5 @@ void string_test() {
       },
   };
   RUN_VM();
-  CU_ASSERT_STRING_EQUAL("defabc", STACK(0).string->value);
+  CU_ASSERT_STRING_EQUAL("abcdef", STACK(0).string->value);
 }

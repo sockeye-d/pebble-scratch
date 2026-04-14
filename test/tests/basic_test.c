@@ -18,5 +18,5 @@ void basic_test() {
       },
   };
   RUN_VM();
-  CU_ASSERT_EQUAL(state.stack[0].num, (-1004) * VM_NUM_RATIO)
+  CU_ASSERT_EQUAL(state.stack[0].num, (1004) * VM_NUM_RATIO)
 }

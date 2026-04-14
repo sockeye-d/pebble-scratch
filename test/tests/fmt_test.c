@@ -2,8 +2,8 @@
 
 void fmt_test() {
   VmInstruction instructions[] = {
-      MK_OP_NUM(3),
       MK_OP_NUM(0.54),
+      MK_OP_NUM(3),
       MK_OP(OP_FMT),
       (VmInstruction){
           .op = OP_EOF,
