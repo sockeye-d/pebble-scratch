@@ -44,7 +44,7 @@ export const compilers: Record<string, BlockCompiler> = {
       return ops.op(VmOp.Fals)
     }
     const op = block.getFieldValue('OP')
-    return [...compiler.compile(bBlock), ...compiler.compile(aBlock), ...ops.op(OPS[op])]
+    return [...compiler.compile(aBlock), ...compiler.compile(bBlock), ...ops.op(OPS[op])]
   },
   logic_operation: (compiler, block) => {
     const OPS: Record<string, VmOp> = {
@@ -56,7 +56,7 @@ export const compilers: Record<string, BlockCompiler> = {
     const bBlock = block.getInputTargetBlock('B')
     const aBytecode = aBlock == null ? ops.bool(false) : compiler.compile(aBlock)
     const bBytecode = bBlock == null ? ops.bool(false) : compiler.compile(bBlock)
-    return [...bBytecode, ...aBytecode, ...ops.op(OPS[op])]
+    return [...aBytecode, ...bBytecode, ...ops.op(OPS[op])]
   },
   logic_negate: (compiler, block) => {
     const bool = block.getInputTargetBlock('BOOL')
@@ -140,7 +140,7 @@ export const compilers: Record<string, BlockCompiler> = {
     const a = block.getInputTargetBlock('A')!
     const b = block.getInputTargetBlock('B')!
     const op = OPS[block.getFieldValue('TYPE')]
-    return [...compiler.compile(b), ...compiler.compile(a), ...ops.op(op)]
+    return [...compiler.compile(a), ...compiler.compile(b), ...ops.op(op)]
   },
   math_unary: (compiler, block) => {
     const OPS: Record<string, VmOp> = {
