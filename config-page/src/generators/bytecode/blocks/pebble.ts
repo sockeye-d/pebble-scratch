@@ -105,7 +105,7 @@ const internal: Record<string, ForeignBlockCompiler | undefined> = {
             'MONTH',
             'YEAR',
           }
-          return ops.num(TimeUnit[unit as keyof typeof TimeUnit])
+          return ops.raw(TimeUnit[unit as keyof typeof TimeUnit])
         },
       },
     ],

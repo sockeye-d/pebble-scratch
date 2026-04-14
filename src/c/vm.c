@@ -11,33 +11,6 @@
 
 #pragma GCC diagnostic ignored "-Wformat"
 
-#define READ_INSTRUCTION() (state->instructions[state->pc++])
-#define PEEK_INSTRUCTION() (state->instructions[state->pc])
-#define PUSH() (state->stack[++state->stack_ptr])
-#define POP() (state->stack[state->stack_ptr--])
-#define PEEK() (state->stack[state->stack_ptr])
-
-#define COERCE_NUM(m_value) ((m_value).type == TYPE_NUM ? (m_value).num : 0)
-#define COERCE_INT(m_value)                                                    \
-  ((m_value).type == TYPE_NUM ? (m_value).num >> VM_NUM_RATIO_L2 : 0)
-#define COERCE_STR(m_value) coerce_str(m_value)
-#define COERCE_BOOL(m_value) coerce_bool(m_value)
-#define COERCE_PTR(m_value) (m_value.ptr)
-#define REF_STACK()                                                            \
-  (state->stack[state->stack_ptr].string->refcount == (uint16_t)-1             \
-       ? 0                                                                     \
-       : ++state->stack[state->stack_ptr].string->refcount)
-
-#define MAKE_STRING(m_name, m_char_ptr, m_length)                              \
-  VmString *m_name = malloc(sizeof(VmString));                                 \
-  do {                                                                         \
-    m_name->refcount = 0;                                                      \
-    {                                                                          \
-      m_name->value = m_char_ptr;                                              \
-      m_name->length = m_length;                                               \
-    }                                                                          \
-  } while (false)
-
 VmString *make_string_literal(char *value, size_t *read_length) {
   size_t length = strlen(value);
   *read_length = length + 1; // `read_length` includes the null terminator
@@ -50,10 +23,9 @@ VmString *make_string_literal(char *value, size_t *read_length) {
 
 void string_unref(VmString *string) {
   if (string->refcount == (uint16_t)-1) {
-    // String literal, don't free.
-    return;
-  }
-  if (--string->refcount == 0) {
+    free(string);
+    // String literal, don't free the value.
+  } else if (--string->refcount == 0) {
     free(string->value);
     free(string);
   }

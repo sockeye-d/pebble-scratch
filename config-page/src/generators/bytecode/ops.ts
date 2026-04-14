@@ -15,7 +15,7 @@ export function num(num: number) {
 }
 
 export function raw(num: number) {
-  return [<VmInstruction>{ type: 'raw', num }]
+  return [...op(VmOp.Num), <VmInstruction>{ type: 'raw', num }]
 }
 
 export function ref(ref: number) {

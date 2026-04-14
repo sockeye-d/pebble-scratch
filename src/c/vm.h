@@ -91,10 +91,40 @@ typedef struct {
 #define VM_NUM_RATIO_L2 8 // Yields a resolution of about 0.004
 #define VM_NUM_RATIO (1 << VM_NUM_RATIO_L2)
 
+#define INT_AS_NUM(m_int) ((m_int) << VM_NUM_RATIO_L2)
+
 #define NUM_AS_FLOAT(m_num) ((m_num) / (float)VM_NUM_RATIO)
 #define FLOAT_AS_NUM(m_float) (VmNum)((m_float) * VM_NUM_RATIO)
 #define NUM_AS_DOUBL(m_num) ((m_num) / (double)VM_NUM_RATIO)
 #define DOUBL_AS_NUM(m_float) (VmNum)((m_float) * VM_NUM_RATIO)
+
+#define READ_INSTRUCTION() (state->instructions[state->pc++])
+#define PEEK_INSTRUCTION() (state->instructions[state->pc])
+#define PUSH() (state->stack[++state->stack_ptr])
+#define POP() (state->stack[state->stack_ptr--])
+#define PEEK() (state->stack[state->stack_ptr])
+
+#define COERCE_NUM(m_value) ((m_value).type == TYPE_NUM ? (m_value).num : 0)
+#define COERCE_INT(m_value)                                                    \
+  ((m_value).type == TYPE_NUM ? (m_value).num >> VM_NUM_RATIO_L2 : 0)
+#define COERCE_STR(m_value) coerce_str(m_value)
+#define COERCE_BOOL(m_value) coerce_bool(m_value)
+#define COERCE_PTR(m_value) (m_value.ptr)
+
+#define REF_STACK()                                                            \
+  (state->stack[state->stack_ptr].string->refcount == (uint16_t)-1             \
+       ? 0                                                                     \
+       : ++state->stack[state->stack_ptr].string->refcount)
+
+#define MAKE_STRING(m_name, m_char_ptr, m_length)                              \
+  VmString *m_name = malloc(sizeof(VmString));                                 \
+  do {                                                                         \
+    m_name->refcount = 0;                                                      \
+    {                                                                          \
+      m_name->value = m_char_ptr;                                              \
+      m_name->length = m_length;                                               \
+    }                                                                          \
+  } while (false)
 
 /**
  * Fixed-point number with a ratio of 1/256
@@ -131,6 +161,8 @@ struct VmState {
   VmValue stack[MAX_STACK];
   VmInstruction *instructions;
 };
+
+void cleanup_val(VmState *state, VmValue value);
 
 VmStepResult vm_step(VmState *state);
 void vm_print_state(VmState *state);

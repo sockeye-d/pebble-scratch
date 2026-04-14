@@ -106,6 +106,28 @@ export const compilers: Record<string, BlockCompiler> = {
   text: (_compiler, block) => {
     return ops.str(block.getFieldValue('TEXT'))
   },
+  text_join: (compiler, block) => {
+    if (block.getInput('EMPTY') != null) {
+      return [...ops.str('')]
+    }
+    const r: VmInstruction[] = []
+    for (let i = 0; ; i++) {
+      const inputName = `ADD${i}`
+      if (block.getInput(inputName) == null) {
+        break
+      }
+      const input = block.getInputTargetBlock(inputName)
+      if (input == null) {
+        r.push(...ops.str(''))
+      } else {
+        r.push(...compiler.compile(input))
+      }
+      if (i > 0) {
+        r.push(...ops.op(VmOp.Cat))
+      }
+    }
+    return r
+  },
   math_number: (_compiler, block) => ops.num(block.getFieldValue('NUM')),
   math_binary: (compiler, block) => {
     const OPS: Record<string, VmOp> = {
