@@ -1,4 +1,5 @@
 import { VarRef, VmInstruction } from '.'
+import { PebbleForeignFunc } from './ffi'
 import { VmOp } from './opcodes'
 
 export function op(op: VmOp) {
@@ -69,4 +70,8 @@ export function str(text: string) {
     top.chars[i % 4] = charCode
   }
   return [...op(VmOp.Str), ...result]
+}
+
+export function call(fn: PebbleForeignFunc) {
+  return [...op(VmOp.CallForeign), ...ref(fn)]
 }

@@ -1,12 +1,15 @@
 #include "vm.h"
 
 #include "trig.h"
+
 #include <math.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#pragma GCC diagnostic ignored "-Wformat"
 
 #define READ_INSTRUCTION() (state->instructions[state->pc++])
 #define PEEK_INSTRUCTION() (state->instructions[state->pc])
@@ -205,7 +208,7 @@ size_t string_find(const char *string, const char *subject) {
     return i;
   outer: {}
   }
-  return -1;
+  return (size_t)-1;
 }
 
 const VmString string_true = (VmString){
@@ -241,7 +244,7 @@ coerce_bool(VmValue value) {
     return value.num != 0;
   }
   if (value.type == TYPE_STRING) {
-    return strcasecmp(string_true.value, value.string->value);
+    return strcmp(string_true.value, value.string->value);
   }
   return false;
 }
@@ -360,7 +363,7 @@ VmStepResult vm_step(VmState *state) {
     }
   } break;
   case OP_DUP: {
-    int32_t c = READ_INSTRUCTION().var - 1;
+    uint32_t c = READ_INSTRUCTION().var - 1;
     uint32_t starting_stack_ptr = state->stack_ptr;
     for (uint32_t stack_i = 0; stack_i <= c; stack_i++) {
       uint32_t stack_ptr = starting_stack_ptr - c + stack_i;
@@ -397,20 +400,20 @@ VmStepResult vm_step(VmState *state) {
     state->pc = ptr;
     cleanup_val(state, a);
   } break;
-    {
-      int32_t offset = VM_NUM_RATIO;
-    case OP_DEC:
+  case OP_DEC:
+  case OP_INC: {
+    int32_t offset = VM_NUM_RATIO;
+    if (op.op == OP_DEC) {
       offset = -offset;
-    case OP_INC:;
-      VmValue a = PEEK();
-      VmNum num = COERCE_NUM(a);
-      state->stack[state->stack_ptr] = (VmValue){
-          .type = TYPE_NUM,
-          .num = num + offset,
-      };
-      cleanup_val(state, a);
     }
-    break;
+    VmValue a = PEEK();
+    VmNum num = COERCE_NUM(a);
+    state->stack[state->stack_ptr] = (VmValue){
+        .type = TYPE_NUM,
+        .num = num + offset,
+    };
+    cleanup_val(state, a);
+  } break;
   case OP_SWP: {
     VmValue top = state->stack[state->stack_ptr];
     state->stack[state->stack_ptr] = state->stack[state->stack_ptr - 1];
@@ -546,6 +549,10 @@ VmStepResult vm_step(VmState *state) {
   case OP_CEIL: {
     VmValue _a = POP();
     VmNum a = COERCE_NUM(_a);
+    PUSH() = (VmValue){
+        .type = TYPE_NUM,
+        .num = (a + VM_NUM_RATIO - 1) >> VM_NUM_RATIO_L2 << VM_NUM_RATIO_L2,
+    };
     cleanup_val(state, _a);
   } break;
   case OP_SIN: {
@@ -648,7 +655,7 @@ VmStepResult vm_step(VmState *state) {
     VmString *subject = COERCE_STR(_b);
     PUSH() = (VmValue){
         .type = TYPE_NUM,
-        .num = string_find(str->value, subject->value) != -1 ? 1 : 0,
+        .num = string_find(str->value, subject->value) != (size_t)-1 ? 1 : 0,
     };
     cleanup_val(state, _a);
     cleanup_val(state, _b);
@@ -681,7 +688,7 @@ VmStepResult vm_step(VmState *state) {
     printf("%s\n", str->value);
     cleanup_val(state, _a);
   } break;
-  case OP_CALL: {
+  case OP_CALL_FOREIGN: {
     size_t call_id = READ_INSTRUCTION().var;
     VmCallHandler handler = state->call_handler;
     if (handler != NULL) {
@@ -837,12 +844,14 @@ const char *print_instruction(VmInstruction instruction) {
     return "OP_FMT";
   case OP_PRINT:
     return "OP_PRINT";
-  case OP_CALL:
+  case OP_CALL_FOREIGN:
     return "OP_CALL";
   case OP_TRUE:
     return "OP_TRUE";
   case OP_FALS:
     return "OP_FALS";
+  case OP_SUS:
+    return "OP_SUS";
   case OP_EOF:
     return "OP_EOF";
   }
@@ -851,10 +860,10 @@ const char *print_instruction(VmInstruction instruction) {
 
 void vm_print_state(VmState *state) {
   printf("PC = %u\nsp = %d\n", state->pc, (int32_t)state->stack_ptr);
-  if (state->stack_ptr == (int32_t)-1) {
+  if (state->stack_ptr == (uint32_t)-1) {
     printf("no stack yet\n");
   } else {
-    for (int32_t i = 0; i <= state->stack_ptr; i++) {
+    for (uint32_t i = 0; i <= state->stack_ptr; i++) {
       if (i >= MAX_STACK) {
         printf("Stack overflow!\n");
         break;

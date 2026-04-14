@@ -61,6 +61,34 @@ export const toolbox: ToolboxDefinition = {
         },
         {
           kind: 'block',
+          type: 'controls_repeat',
+          inputs: {
+            TIMES: {
+              shadow: {
+                type: 'math_number',
+                fields: {
+                  NUM: 67,
+                },
+              },
+            },
+          },
+        },
+        {
+          kind: 'block',
+          type: 'controls_while',
+          inputs: {
+            BOOL: {
+              shadow: {
+                type: 'logic_boolean_yellow',
+                fields: {
+                  BOOL: 'TRUE',
+                },
+              },
+            },
+          },
+        },
+        {
+          kind: 'block',
           type: 'controls_wait',
           inputs: {
             SECONDS: {
@@ -95,34 +123,6 @@ export const toolbox: ToolboxDefinition = {
         {
           kind: 'block',
           type: 'logic_boolean',
-        },
-        {
-          kind: 'block',
-          type: 'controls_repeat_ext',
-          inputs: {
-            TIMES: {
-              shadow: {
-                type: 'math_number',
-                fields: {
-                  NUM: 67,
-                },
-              },
-            },
-          },
-        },
-        {
-          kind: 'block',
-          type: 'controls_whileUntil',
-          inputs: {
-            BOOL: {
-              shadow: {
-                type: 'logic_boolean',
-                fields: {
-                  BOOL: 'TRUE',
-                },
-              },
-            },
-          },
         },
       ],
     },

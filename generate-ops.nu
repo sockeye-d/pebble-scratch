@@ -20,7 +20,7 @@ def generate-ffi [--output-file: path] {
       | get name
   $"export enum PebbleForeignFunc {\n($funcs | str pascal-case | each { '  ' + $in } | str join ",\n"),\n}"
       | save --force $output_file
-  $"#include \"pebble_foreign_funcs.h\"\nvoid \(*const handlers[]\)\(VmState *state\) = {\n($funcs | each { '  ' + $in } | str join ",\n"),\n};"
+  $"void \(*const handlers[]\)\(VmState *state\) = {\n($funcs | each { '  ' + $in } | str join ",\n"),\n};"
       | save --force src/c/pebble_foreign_funcs_gen
 }
 

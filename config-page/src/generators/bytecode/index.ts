@@ -1,8 +1,8 @@
 import * as blockly from 'blockly'
 import { VmOp } from './opcodes'
 import * as ops from './ops'
-import * as core from './core'
-import * as foreign from './pebble'
+import * as core from './blocks/core'
+import * as foreign from './blocks/pebble'
 
 export type VmInstruction =
   | { type: 'nil'; info: string }

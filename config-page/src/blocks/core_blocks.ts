@@ -52,6 +52,53 @@ const controls_if_else = {
   colour: 45,
 }
 
+const controls_repeat = {
+  type: 'controls_repeat',
+  message0: 'repeat %1 %2',
+  args0: [
+    {
+      type: 'input_value',
+      name: 'TIMES',
+    },
+    {
+      type: 'input_statement',
+      name: 'DO',
+    },
+  ],
+  previousStatement: null,
+  nextStatement: null,
+  colour: 45,
+}
+
+const controls_while = {
+  type: 'controls_while',
+  message0: 'repeat %1 %2 %3',
+  args0: [
+    {
+      type: 'field_dropdown',
+      name: 'MODE',
+      options: [
+        ['while', 'WHILE'],
+        ['until', 'UNTIL'],
+      ],
+      align: 'LEFT',
+    },
+    {
+      type: 'input_value',
+      name: 'BOOL',
+      align: 'LEFT',
+    },
+    {
+      type: 'input_statement',
+      name: 'DO',
+      align: 'LEFT',
+    },
+  ],
+  previousStatement: null,
+  nextStatement: null,
+  colour: 45,
+}
+
 const logic_boolean_yellow = {
   type: 'logic_boolean_yellow',
   message0: '%1',
@@ -191,6 +238,8 @@ const text_find = {
 export const blocks = Blockly.common.createBlockDefinitionsFromJsonArray([
   controls_if,
   controls_if_else,
+  controls_repeat,
+  controls_while,
   logic_boolean_yellow,
   math_unary,
   math_binary,

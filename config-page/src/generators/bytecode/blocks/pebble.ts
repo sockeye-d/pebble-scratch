@@ -1,9 +1,9 @@
-import { BlockCompiler, VmInstruction } from '.'
-import { PebbleForeignFunc } from './ffi'
-import * as ops from './ops'
+import { BlockCompiler, VmInstruction } from '..'
+import { PebbleForeignFunc } from '../ffi'
+import * as ops from '../ops'
 
 type ForeignBlockCompiler = {
-  decl: PebbleForeignFunc
+  fn: PebbleForeignFunc
   args: (
     | { field: string; op: (value: any) => VmInstruction[] }
     | { input: string; default?: VmInstruction[]; op?: (value: VmInstruction[]) => VmInstruction[] }
@@ -17,7 +17,7 @@ const internal: Record<string, ForeignBlockCompiler | undefined> = {
   events_on_time_change: undefined,
   controls_wait: undefined,
   sensors_accelerometer: {
-    decl: PebbleForeignFunc.SensorsAccelerometer,
+    fn: PebbleForeignFunc.SensorsAccelerometer,
     args: [{ field: 'AXIS', op: (axis: any) => ops.num(axis == 'Z' ? 2 : axis == 'Y' ? 1 : 0) }],
   },
   sensors_battery: undefined,
@@ -49,6 +49,7 @@ export const compilers: Record<string, BlockCompiler> = (() => {
           bytecode.push(...(inner === null ? (arg.default ?? []) : compiler.compile(inner)))
         }
       }
+      bytecode.push(...ops.call(value.fn))
       return bytecode
     }
   }

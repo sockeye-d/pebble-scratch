@@ -1,6 +1,6 @@
-import * as ops from './ops'
-import { BlockCompiler, VarID, VmInstruction } from '.'
-import { VmOp } from './opcodes'
+import * as ops from '../ops'
+import { BlockCompiler, VarID, VmInstruction } from '..'
+import { VmOp } from '../opcodes'
 
 export const compilers: Record<string, BlockCompiler> = {
   controls_if: (compiler, block) => {
