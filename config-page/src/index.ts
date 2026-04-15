@@ -7,7 +7,9 @@ import './index.css'
 import * as layers from './layers'
 import DarkTheme from '@blockly/theme-dark'
 import * as bytecode from './generators/bytecode'
+import { ColorField } from './inputs/ColorInput'
 
+Blockly.fieldRegistry.register('field_color', ColorField)
 Blockly.common.defineBlocks(core.blocks)
 Blockly.common.defineBlocks(pebble.blocks)
 Blockly.common.defineBlocks(layers.blocks)
@@ -22,6 +24,7 @@ const theme = Blockly.Theme.defineTheme('theme', {
     layers_category: { colour: '60' },
     time_category: { colour: '250' },
     sensors_category: { colour: '280' },
+    graphics_category: { colour: '80' },
   },
 })
 

@@ -247,28 +247,6 @@ export const toolbox: ToolboxDefinition = {
         },
         {
           kind: 'block',
-          type: 'text_indexOf',
-          inputs: {
-            VALUE: {
-              shadow: {
-                type: 'text',
-                fields: {
-                  TEXT: 'abc',
-                },
-              },
-            },
-            FIND: {
-              shadow: {
-                type: 'text',
-                fields: {
-                  TEXT: 'abc',
-                },
-              },
-            },
-          },
-        },
-        {
-          kind: 'block',
           type: 'text_find',
           inputs: {
             SUBJECT: {
@@ -296,16 +274,25 @@ export const toolbox: ToolboxDefinition = {
             FROM: {
               shadow: {
                 type: 'text',
+                fields: {
+                  TEXT: 'core',
+                },
               },
             },
             TO: {
               shadow: {
                 type: 'text',
+                fields: {
+                  TEXT: 'pebble',
+                },
               },
             },
             TEXT: {
               shadow: {
                 type: 'text',
+                fields: {
+                  TEXT: 'core time 2*',
+                },
               },
             },
           },
@@ -372,6 +359,28 @@ export const toolbox: ToolboxDefinition = {
           type: 'sensors_watch_color',
           fields: {
             COLOR: 'WATCH_INFO_COLOR_TIME_STEEL_GOLD',
+          },
+        },
+      ],
+    },
+    {
+      kind: 'category',
+      name: 'Graphics',
+      categorystyle: 'graphics_category',
+      contents: [
+        {
+          kind: 'block',
+          type: 'graphics_color',
+        },
+        {
+          kind: 'block',
+          type: 'graphics_set_color',
+          inputs: {
+            COLOR: {
+              shadow: {
+                type: 'graphics_color',
+              },
+            },
           },
         },
       ],

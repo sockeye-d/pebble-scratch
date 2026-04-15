@@ -91,7 +91,7 @@ typedef struct {
 #define VM_NUM_RATIO_L2 8 // Yields a resolution of about 0.004
 #define VM_NUM_RATIO (1 << VM_NUM_RATIO_L2)
 
-#define INT_AS_NUM(m_int) ((m_int) << VM_NUM_RATIO_L2)
+#define INT_AS_NUM(m_int) ((m_int) * VM_NUM_RATIO)
 
 #define NUM_AS_FLOAT(m_num) ((m_num) / (float)VM_NUM_RATIO)
 #define FLOAT_AS_NUM(m_float) (VmNum)((m_float) * VM_NUM_RATIO)

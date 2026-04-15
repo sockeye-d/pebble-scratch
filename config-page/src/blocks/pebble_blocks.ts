@@ -262,6 +262,33 @@ const sensors_watch_color = {
   colour: 280,
 }
 
+const graphics_color = {
+  type: 'graphics_color',
+  message0: '%1',
+  args0: [
+    {
+      type: 'field_color',
+      name: 'COLOR',
+    },
+  ],
+  output: 'Number',
+  colour: 80,
+}
+
+const graphics_set_color = {
+  type: 'graphics_set_color',
+  message0: 'set color to %1',
+  args0: [
+    {
+      type: 'input_value',
+      name: 'COLOR',
+    },
+  ],
+  previousStatement: null,
+  nextStatement: null,
+  colour: 80,
+}
+
 export const blocks = Blockly.common.createBlockDefinitionsFromJsonArray([
   events_on_button_pressed,
   events_main,
@@ -279,4 +306,7 @@ export const blocks = Blockly.common.createBlockDefinitionsFromJsonArray([
   sensors_watch_model,
   sensors_current_watch_color,
   sensors_watch_color,
+
+  graphics_color,
+  graphics_set_color,
 ])

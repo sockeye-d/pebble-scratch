@@ -51,3 +51,7 @@ code {
 .blocklyMainBackground {
   stroke: none;
 }
+
+.blocklyDropDownContent {
+  max-height: unset; /* @todo: spec for maximum height. */
+}

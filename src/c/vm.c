@@ -486,14 +486,14 @@ VmStepResult vm_step(VmState *state) {
     BINARY_N_OPR(a > b ? a : b);
   } break;
   case OP_CLAMP: {
-    VmValue _b = POP();
     VmValue _a = POP();
+    VmValue _b = POP();
     VmValue _c = POP();
-    VmNum a = COERCE_NUM(_a);
+    VmNum x = COERCE_NUM(_c);
     VmNum min = COERCE_NUM(_b);
-    VmNum max = COERCE_NUM(_c);
+    VmNum max = COERCE_NUM(_a);
     PUSH() =
-        (VmValue){.type = TYPE_NUM, .num = a < min ? min : (a > max ? max : a)};
+        (VmValue){.type = TYPE_NUM, .num = x < min ? min : (x > max ? max : x)};
     cleanup_val(state, _a);
     cleanup_val(state, _b);
     cleanup_val(state, _c);
@@ -591,12 +591,12 @@ VmStepResult vm_step(VmState *state) {
     cleanup_val(state, _c);
   } break;
   case OP_SUBST: {
-    VmValue _b = POP();
     VmValue _a = POP();
+    VmValue _b = POP();
     VmValue _c = POP();
     VmString *str = COERCE_STR(_a);
-    VmString *what = COERCE_STR(_b);
-    VmString *with = COERCE_STR(_c);
+    VmString *with = COERCE_STR(_b);
+    VmString *what = COERCE_STR(_c);
     PUSH() = (VmValue){
         .type = TYPE_STRING,
         .string = string_substitute(str->value, what->value, with->value),
@@ -607,13 +607,14 @@ VmStepResult vm_step(VmState *state) {
     cleanup_val(state, _c);
   } break;
   case OP_FIND: {
-    VmValue _b = POP();
     VmValue _a = POP();
+    VmValue _b = POP();
     VmString *str = COERCE_STR(_a);
     VmString *subject = COERCE_STR(_b);
+    size_t location = string_find(str->value, subject->value);
     PUSH() = (VmValue){
         .type = TYPE_NUM,
-        .num = string_find(str->value, subject->value) << VM_NUM_RATIO_L2,
+        .num = location == (size_t)-1 ? INT_AS_NUM(-1) : INT_AS_NUM(location),
     };
     cleanup_val(state, _a);
     cleanup_val(state, _b);

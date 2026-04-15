@@ -128,6 +128,18 @@ export const compilers: Record<string, BlockCompiler> = {
     }
     return r
   },
+  text_length: (compiler, block) => [...compiler.compile(block.getInputTargetBlock('VALUE')!), ...ops.op(VmOp.Len)],
+  text_find: (compiler, block) => [
+    ...compiler.compile(block.getInputTargetBlock('WHAT')!),
+    ...compiler.compile(block.getInputTargetBlock('SUBJECT')!),
+    ...ops.op(VmOp.Find),
+  ],
+  text_replace: (compiler, block) => [
+    ...compiler.compile(block.getInputTargetBlock('FROM')!),
+    ...compiler.compile(block.getInputTargetBlock('TO')!),
+    ...compiler.compile(block.getInputTargetBlock('TEXT')!),
+    ...ops.op(VmOp.Subst),
+  ],
   math_number: (_compiler, block) => ops.num(block.getFieldValue('NUM')),
   math_binary: (compiler, block) => {
     const OPS: Record<string, VmOp> = {
@@ -157,6 +169,12 @@ export const compilers: Record<string, BlockCompiler> = {
     const num = block.getInputTargetBlock('NUM')!
     return [...compiler.compile(num), ...ops.op(OPS[block.getFieldValue('TYPE')])]
   },
+  math_clamp: (compiler, block) => [
+    ...compiler.compile(block.getInputTargetBlock('VAL')!),
+    ...compiler.compile(block.getInputTargetBlock('MIN')!),
+    ...compiler.compile(block.getInputTargetBlock('MAX')!),
+    ...ops.op(VmOp.Clamp),
+  ],
   variables_get: (compiler, block) => {
     const varID: VarID = block.getFieldValue('VAR')
     return ops.load(compiler.variableRefFor(varID))

@@ -32,7 +32,7 @@ const layer_on_draw = {
     { type: 'input_dummy' },
     {
       type: 'field_dropdown',
-      name: 'BUTTON',
+      name: 'LAYER',
       options: getLayerOptions,
     },
     {
@@ -40,7 +40,7 @@ const layer_on_draw = {
       name: 'CONTENT',
     },
   ],
-  colour: 5,
+  colour: 80,
 }
 
 const layer_draw = {
@@ -49,13 +49,13 @@ const layer_draw = {
   args0: [
     {
       type: 'field_dropdown',
-      name: 'BUTTON',
+      name: 'LAYER',
       options: getLayerOptions,
     },
   ],
   previousStatement: null,
   nextStatement: null,
-  colour: 5,
+  colour: 80,
 }
 
 export const blocks = blockly.common.createBlockDefinitionsFromJsonArray([layer_draw, layer_on_draw])

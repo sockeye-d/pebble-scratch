@@ -228,15 +228,15 @@ const math_constant = {
 
 const text_find = {
   type: 'text_find',
-  message0: 'in text %1 find %2',
+  message0: 'find %1 in %2',
   args0: [
     {
       type: 'input_value',
-      name: 'SUBJECT',
+      name: 'WHAT',
     },
     {
       type: 'input_value',
-      name: 'WHAT',
+      name: 'SUBJECT',
     },
   ],
   output: null,
