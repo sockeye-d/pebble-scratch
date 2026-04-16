@@ -117,6 +117,10 @@ export class PebbleColor {
     return `#${singleToHex(this.r)}${singleToHex(this.g)}${singleToHex(this.b)}`
   }
 
+  toPackedNum() {
+    return (this.a << 6) | (this.r << 4) | (this.g << 2) | this.b
+  }
+
   toRgba() {
     return `rgba(${(this.r / 3.0) * 255} ${(this.g / 3.0) * 255} ${(this.b / 3.0) * 255} / ${this.a / 3.0})`
   }
@@ -149,7 +153,7 @@ export class ColorField extends Field<string> {
   }
   public set color(value: PebbleColor) {
     this._color = value
-    this.setValue(value.toHex(true))
+    this.setValue(value.toPackedNum())
     if (this.leftRect) {
       this.leftRect.style.fill = this.color.toHex()
     }
@@ -294,12 +298,10 @@ export class ColorField extends Field<string> {
   }
 
   override saveState(_doFullSerialization?: boolean) {
-    console.log(this.color.toHex(true))
     return this.color.toHex(true)
   }
 
   override loadState(state: any): void {
-    console.log(state)
     this.color = PebbleColor.fromHex(state)
   }
 

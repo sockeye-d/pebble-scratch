@@ -6,6 +6,49 @@
 #define PBL_BIND(m_name) void m_name(VmState *state)
 
 static AccelData last_accel_data;
+GContext *context = NULL;
+
+void set_local_gcontext(GContext *ctx) { context = ctx; }
+void clear_local_gcontext() { context = NULL; }
+
+#define GCTX_CALL(method, ...) graphics_context_##method(context, __VA_ARGS__)
+
+PBL_BIND(graphics_set_fill_color) {
+  VmValue _a = POP();
+  int32_t color = COERCE_RAW(_a);
+  if (color < 0) {
+    color = 0;
+  } else if (color > 255) {
+    color = 255;
+  }
+  GCTX_CALL(set_fill_color, (GColor){.argb = color});
+  GCTX_CALL(set_text_color, (GColor){.argb = color});
+  cleanup_val(state, _a);
+}
+
+PBL_BIND(graphics_set_stroke_color) {
+  VmValue _a = POP();
+  int32_t color = COERCE_RAW(_a);
+  if (color < 0) {
+    color = 0;
+  } else if (color > 255) {
+    color = 255;
+  }
+  GCTX_CALL(set_stroke_color, (GColor){.argb = color});
+  cleanup_val(state, _a);
+}
+
+PBL_BIND(graphics_set_stroke_width) {
+  VmValue _a = POP();
+  int32_t width = COERCE_INT(_a);
+  if (width < 0) {
+    width = 0;
+  } else if (width > 255) {
+    width = 255;
+  }
+  GCTX_CALL(set_stroke_width, width);
+  cleanup_val(state, _a);
+}
 
 PBL_BIND(controls_wait);
 PBL_BIND(sensors_accelerometer) {

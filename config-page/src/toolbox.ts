@@ -374,11 +374,36 @@ export const toolbox: ToolboxDefinition = {
         },
         {
           kind: 'block',
-          type: 'graphics_set_color',
+          type: 'graphics_set_fill_color',
           inputs: {
             COLOR: {
               shadow: {
                 type: 'graphics_color',
+              },
+            },
+          },
+        },
+        {
+          kind: 'block',
+          type: 'graphics_set_stroke_color',
+          inputs: {
+            COLOR: {
+              shadow: {
+                type: 'graphics_color',
+              },
+            },
+          },
+        },
+        {
+          kind: 'block',
+          type: 'graphics_set_stroke_width',
+          inputs: {
+            WIDTH: {
+              shadow: {
+                type: 'math_number',
+                fields: {
+                  NUM: 6.7,
+                },
               },
             },
           },

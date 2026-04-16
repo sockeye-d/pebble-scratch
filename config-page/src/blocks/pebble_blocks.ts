@@ -275,13 +275,41 @@ const graphics_color = {
   colour: 80,
 }
 
-const graphics_set_color = {
-  type: 'graphics_set_color',
+const graphics_set_fill_color = {
+  type: 'graphics_set_fill_color',
   message0: 'set color to %1',
   args0: [
     {
       type: 'input_value',
       name: 'COLOR',
+    },
+  ],
+  previousStatement: null,
+  nextStatement: null,
+  colour: 80,
+}
+
+const graphics_set_stroke_color = {
+  type: 'graphics_set_stroke_color',
+  message0: 'set stroke color to %1',
+  args0: [
+    {
+      type: 'input_value',
+      name: 'COLOR',
+    },
+  ],
+  previousStatement: null,
+  nextStatement: null,
+  colour: 80,
+}
+
+const graphics_set_stroke_width = {
+  type: 'graphics_set_stroke_width',
+  message0: 'set stroke width to %1',
+  args0: [
+    {
+      type: 'input_value',
+      name: 'WIDTH',
     },
   ],
   previousStatement: null,
@@ -308,5 +336,7 @@ export const blocks = Blockly.common.createBlockDefinitionsFromJsonArray([
   sensors_watch_color,
 
   graphics_color,
-  graphics_set_color,
+  graphics_set_fill_color,
+  graphics_set_stroke_color,
+  graphics_set_stroke_width,
 ])

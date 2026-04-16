@@ -3,7 +3,7 @@ import { PebbleForeignFunc } from '../ffi'
 import * as ops from '../ops'
 
 type ForeignBlockCompiler = {
-  fn?: PebbleForeignFunc
+  fn?: PebbleForeignFunc | null
   args?: (
     | { field: string; op: (value: any) => VmInstruction[] }
     | { input: string; default?: VmInstruction[]; op?: (value: VmInstruction[]) => VmInstruction[] }
@@ -12,6 +12,19 @@ type ForeignBlockCompiler = {
 }
 
 const internal: Record<string, ForeignBlockCompiler | undefined> = {
+  graphics_color: {
+    fn: null,
+    generator: (_compiler, block) => ops.raw(block.getFieldValue('COLOR')),
+  },
+  graphics_set_fill_color: {
+    args: [{ input: 'COLOR' }],
+  },
+  graphics_set_stroke_color: {
+    args: [{ input: 'COLOR' }],
+  },
+  graphics_set_stroke_width: {
+    args: [{ input: 'WIDTH' }],
+  },
   events_main: undefined,
   events_on_button_pressed: undefined,
   events_on_tapped: undefined,
@@ -130,15 +143,19 @@ export const compilers = (() => {
             bytecode.push(...(inner === null ? (arg.default ?? []) : compiler.compile(inner)))
           }
         }
-        let fn =
-          value.fn ??
-          PebbleForeignFunc[
-            name
-              .split('_')
-              .map((e) => e.slice(0, 1).toUpperCase() + e.slice(1))
-              .join('') as keyof typeof PebbleForeignFunc
-          ]
-        bytecode.push(...ops.call(fn))
+        let fn = value.fn
+        if (fn === undefined) {
+          fn =
+            PebbleForeignFunc[
+              name
+                .split('_')
+                .map((e) => e.slice(0, 1).toUpperCase() + e.slice(1))
+                .join('') as keyof typeof PebbleForeignFunc
+            ]
+        }
+        if (fn !== null) {
+          bytecode.push(...ops.call(fn))
+        }
         return bytecode
       })
   }

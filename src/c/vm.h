@@ -105,6 +105,7 @@ typedef struct {
 #define PEEK() (state->stack[state->stack_ptr])
 
 #define COERCE_NUM(m_value) ((m_value).type == TYPE_NUM ? (m_value).num : 0)
+#define COERCE_RAW(m_value) ((m_value).type == TYPE_NUM ? (m_value).num : 0)
 #define COERCE_INT(m_value)                                                    \
   ((m_value).type == TYPE_NUM ? (m_value).num >> VM_NUM_RATIO_L2 : 0)
 #define COERCE_STR(m_value) coerce_str(m_value)

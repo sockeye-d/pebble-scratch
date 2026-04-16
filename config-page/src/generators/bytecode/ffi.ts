@@ -1,4 +1,7 @@
 export enum PebbleForeignFunc {
+  GraphicsSetFillColor,
+  GraphicsSetStrokeColor,
+  GraphicsSetStrokeWidth,
   ControlsWait,
   SensorsAccelerometer,
   SensorsBattery,
