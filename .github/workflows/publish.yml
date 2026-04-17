@@ -10,7 +10,7 @@ jobs:
         uses: actions/configure-pages@v5
       - run: |
           cd config-page
-          npm build
+          npm run build
       - name: Upload static files as artifact
         id: deployment
         uses: actions/upload-pages-artifact@v4
