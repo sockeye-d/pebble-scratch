@@ -4,8 +4,6 @@
 
 Bytecode instructions (load = load one value from memory):
 
--# this is probably not correct as the operand order has been swapped for many of these
-
 | Name   | Operation                                                                                                                           |
 | ------ | ----------------------------------------------------------------------------------------------------------------------------------- |
 | nop    | Does nothing                                                                                                                        |
