@@ -275,22 +275,23 @@ const graphics_color = {
   colour: 80,
 }
 
-const graphics_set_fill_color = {
-  type: 'graphics_set_fill_color',
-  message0: 'set color to %1',
+const graphics_bind_set_fill_color = {
+  type: 'graphics_bind_set_fill_color',
+  message0: 'set fill color to %1',
   args0: [
     {
       type: 'input_value',
       name: 'COLOR',
     },
   ],
+  inputsInline: true,
   previousStatement: null,
   nextStatement: null,
   colour: 80,
 }
 
-const graphics_set_stroke_color = {
-  type: 'graphics_set_stroke_color',
+const graphics_bind_set_stroke_color = {
+  type: 'graphics_bind_set_stroke_color',
   message0: 'set stroke color to %1',
   args0: [
     {
@@ -298,13 +299,14 @@ const graphics_set_stroke_color = {
       name: 'COLOR',
     },
   ],
+  inputsInline: true,
   previousStatement: null,
   nextStatement: null,
   colour: 80,
 }
 
-const graphics_set_stroke_width = {
-  type: 'graphics_set_stroke_width',
+const graphics_bind_set_stroke_width = {
+  type: 'graphics_bind_set_stroke_width',
   message0: 'set stroke width to %1',
   args0: [
     {
@@ -312,12 +314,278 @@ const graphics_set_stroke_width = {
       name: 'WIDTH',
     },
   ],
+  inputsInline: true,
+  previousStatement: null,
+  nextStatement: null,
+  colour: 80,
+}
+
+const graphics_bind_draw_arc = {
+  type: 'graphics_bind_draw_arc',
+  message0: 'draw arc from %1° to %2° at x: %3 y: %4 with radius: %5',
+  args0: [
+    {
+      type: 'input_value',
+      name: 'START',
+    },
+    {
+      type: 'input_value',
+      name: 'END',
+    },
+    {
+      type: 'input_value',
+      name: 'X',
+    },
+    {
+      type: 'input_value',
+      name: 'Y',
+    },
+    {
+      type: 'input_value',
+      name: 'RADIUS',
+    },
+  ],
+  inputsInline: true,
+  previousStatement: null,
+  nextStatement: null,
+  colour: 80,
+}
+
+const graphics_bind_fill_arc = {
+  type: 'graphics_bind_fill_arc',
+  message0: 'fill arc from %1° to %2° at x: %3 y: %4 with radius: %5',
+  args0: [
+    {
+      type: 'input_value',
+      name: 'START',
+    },
+    {
+      type: 'input_value',
+      name: 'END',
+    },
+    {
+      type: 'input_value',
+      name: 'X',
+    },
+    {
+      type: 'input_value',
+      name: 'Y',
+    },
+    {
+      type: 'input_value',
+      name: 'RADIUS',
+    },
+  ],
+  inputsInline: true,
+  previousStatement: null,
+  nextStatement: null,
+  colour: 80,
+}
+
+const graphics_bind_draw_circle = {
+  type: 'graphics_bind_draw_circle',
+  message0: 'draw circle at x: %1 y: %2 with radius: %3',
+  args0: [
+    {
+      type: 'input_value',
+      name: 'X',
+    },
+    {
+      type: 'input_value',
+      name: 'Y',
+    },
+    {
+      type: 'input_value',
+      name: 'RADIUS',
+    },
+  ],
+  inputsInline: true,
+  previousStatement: null,
+  nextStatement: null,
+  colour: 80,
+}
+const graphics_bind_fill_circle = {
+  type: 'graphics_bind_fill_circle',
+  message0: 'fill circle at x: %1 y: %2 with radius: %3',
+  args0: [
+    {
+      type: 'input_value',
+      name: 'X',
+    },
+    {
+      type: 'input_value',
+      name: 'Y',
+    },
+    {
+      type: 'input_value',
+      name: 'RADIUS',
+    },
+  ],
+  inputsInline: true,
+  previousStatement: null,
+  nextStatement: null,
+  colour: 80,
+}
+
+const graphics_bind_draw_rect = {
+  type: 'graphics_bind_draw_rect',
+  message0: 'draw rect at x: %1 y: %2 with width: %3 height: %4',
+  args0: [
+    {
+      type: 'input_value',
+      name: 'X',
+    },
+    {
+      type: 'input_value',
+      name: 'Y',
+    },
+    {
+      type: 'input_value',
+      name: 'W',
+    },
+    {
+      type: 'input_value',
+      name: 'H',
+    },
+  ],
+  inputsInline: true,
+  previousStatement: null,
+  nextStatement: null,
+  colour: 80,
+}
+
+const graphics_bind_fill_rect = {
+  type: 'graphics_bind_fill_rect',
+  message0: 'draw rect at x: %1 y: %2 with width: %3 height: %4',
+  args0: [
+    {
+      type: 'input_value',
+      name: 'X',
+    },
+    {
+      type: 'input_value',
+      name: 'Y',
+    },
+    {
+      type: 'input_value',
+      name: 'W',
+    },
+    {
+      type: 'input_value',
+      name: 'H',
+    },
+  ],
+  inputsInline: true,
+  previousStatement: null,
+  nextStatement: null,
+  colour: 80,
+}
+
+const graphics_bind_draw_line = {
+  type: 'graphics_bind_draw_line',
+  message0: 'draw line from x: %1 y: %2 to x: %3 y: %4',
+  args0: [
+    {
+      type: 'input_value',
+      name: 'X1',
+    },
+    {
+      type: 'input_value',
+      name: 'Y1',
+    },
+    {
+      type: 'input_value',
+      name: 'X2',
+    },
+    {
+      type: 'input_value',
+      name: 'Y2',
+    },
+  ],
+  inputsInline: true,
+  previousStatement: null,
+  nextStatement: null,
+  colour: 80,
+}
+
+const graphics_bind_set_alignment = {
+  type: 'graphics_bind_set_alignment',
+  message0: 'set text alignment to %1',
+  args0: [
+    {
+      type: 'field_dropdown',
+      name: 'ALIGNMENT',
+      options: [
+        ['left', 'L'],
+        ['center', 'C'],
+        ['right', 'R'],
+      ],
+    },
+  ],
+  inputsInline: true,
+  previousStatement: null,
+  nextStatement: null,
+  colour: 80,
+}
+
+const graphics_bind_draw_text = {
+  type: 'graphics_bind_draw_text',
+  message0: 'write %1 in font %2 at x: %3 y: %4',
+  args0: [
+    {
+      type: 'input_value',
+      name: 'TEXT',
+    },
+    {
+      type: 'field_dropdown',
+      name: 'FONT',
+      options: [
+        ['gothic 18 bold', 'FONT_KEY_GOTHIC_18_BOLD'],
+        ['gothic 24', 'FONT_KEY_GOTHIC_24'],
+        ['gothic 09', 'FONT_KEY_GOTHIC_09'],
+        ['gothic 14', 'FONT_KEY_GOTHIC_14'],
+        ['gothic 14 bold', 'FONT_KEY_GOTHIC_14_BOLD'],
+        ['gothic 18', 'FONT_KEY_GOTHIC_18'],
+        ['gothic 24 bold', 'FONT_KEY_GOTHIC_24_BOLD'],
+        ['gothic 28', 'FONT_KEY_GOTHIC_28'],
+        ['gothic 28 bold', 'FONT_KEY_GOTHIC_28_BOLD'],
+        ['bitham 30 black', 'FONT_KEY_BITHAM_30_BLACK'],
+        ['bitham 42 bold', 'FONT_KEY_BITHAM_42_BOLD'],
+        ['bitham 42 light', 'FONT_KEY_BITHAM_42_LIGHT'],
+        ['bitham 42 medium numbers', 'FONT_KEY_BITHAM_42_MEDIUM_NUMBERS'],
+        ['bitham 34 medium numbers', 'FONT_KEY_BITHAM_34_MEDIUM_NUMBERS'],
+        ['bitham 34 light subset', 'FONT_KEY_BITHAM_34_LIGHT_SUBSET'],
+        ['bitham 18 light subset', 'FONT_KEY_BITHAM_18_LIGHT_SUBSET'],
+        ['roboto condensed 21', 'FONT_KEY_ROBOTO_CONDENSED_21'],
+        ['roboto bold subset 49', 'FONT_KEY_ROBOTO_BOLD_SUBSET_49'],
+        ['droid serif 28 bold', 'FONT_KEY_DROID_SERIF_28_BOLD'],
+        ['leco 20 bold numbers', 'FONT_KEY_LECO_20_BOLD_NUMBERS'],
+        ['leco 26 bold numbers am pm', 'FONT_KEY_LECO_26_BOLD_NUMBERS_AM_PM'],
+        ['leco 32 bold numbers', 'FONT_KEY_LECO_32_BOLD_NUMBERS'],
+        ['leco 36 bold numbers', 'FONT_KEY_LECO_36_BOLD_NUMBERS'],
+        ['leco 38 bold numbers', 'FONT_KEY_LECO_38_BOLD_NUMBERS'],
+        ['leco 42 numbers', 'FONT_KEY_LECO_42_NUMBERS'],
+        ['leco 28 light numbers', 'FONT_KEY_LECO_28_LIGHT_NUMBERS'],
+        ['fallback', 'FONT_KEY_FONT_FALLBACK'],
+      ],
+    },
+    {
+      type: 'input_value',
+      name: 'X',
+    },
+    {
+      type: 'input_value',
+      name: 'Y',
+    },
+  ],
+  inputsInline: true,
   previousStatement: null,
   nextStatement: null,
   colour: 80,
 }
 
 export const blocks = Blockly.common.createBlockDefinitionsFromJsonArray([
+  // BEGIN BLOCKS
   events_on_button_pressed,
   events_main,
   events_on_tapped,
@@ -336,7 +604,17 @@ export const blocks = Blockly.common.createBlockDefinitionsFromJsonArray([
   sensors_watch_color,
 
   graphics_color,
-  graphics_set_fill_color,
-  graphics_set_stroke_color,
-  graphics_set_stroke_width,
+  graphics_bind_set_fill_color,
+  graphics_bind_set_stroke_color,
+  graphics_bind_set_stroke_width,
+  graphics_bind_draw_arc,
+  graphics_bind_fill_arc,
+  graphics_bind_draw_circle,
+  graphics_bind_fill_circle,
+  graphics_bind_draw_rect,
+  graphics_bind_fill_rect,
+  graphics_bind_draw_line,
+  graphics_bind_set_alignment,
+  graphics_bind_draw_text,
+  // END BLOCKS
 ])

@@ -11,9 +11,7 @@ GContext *context = NULL;
 void set_local_gcontext(GContext *ctx) { context = ctx; }
 void clear_local_gcontext() { context = NULL; }
 
-#define GCTX_CALL(method, ...) graphics_context_##method(context, __VA_ARGS__)
-
-PBL_BIND(graphics_set_fill_color) {
+PBL_BIND(graphics_bind_set_fill_color) {
   VmValue _a = POP();
   int32_t color = COERCE_RAW(_a);
   if (color < 0) {
@@ -21,12 +19,12 @@ PBL_BIND(graphics_set_fill_color) {
   } else if (color > 255) {
     color = 255;
   }
-  GCTX_CALL(set_fill_color, (GColor){.argb = color});
-  GCTX_CALL(set_text_color, (GColor){.argb = color});
+  graphics_context_set_fill_color(context, (GColor){.argb = color});
+  graphics_context_set_text_color(context, (GColor){.argb = color});
   cleanup_val(state, _a);
 }
 
-PBL_BIND(graphics_set_stroke_color) {
+PBL_BIND(graphics_bind_set_stroke_color) {
   VmValue _a = POP();
   int32_t color = COERCE_RAW(_a);
   if (color < 0) {
@@ -34,11 +32,11 @@ PBL_BIND(graphics_set_stroke_color) {
   } else if (color > 255) {
     color = 255;
   }
-  GCTX_CALL(set_stroke_color, (GColor){.argb = color});
+  graphics_context_set_stroke_color(context, (GColor){.argb = color});
   cleanup_val(state, _a);
 }
 
-PBL_BIND(graphics_set_stroke_width) {
+PBL_BIND(graphics_bind_set_stroke_width) {
   VmValue _a = POP();
   int32_t width = COERCE_INT(_a);
   if (width < 0) {
@@ -46,8 +44,178 @@ PBL_BIND(graphics_set_stroke_width) {
   } else if (width > 255) {
     width = 255;
   }
-  GCTX_CALL(set_stroke_width, width);
+  graphics_context_set_stroke_width(context, width);
   cleanup_val(state, _a);
+}
+
+static void __attribute__((__always_inline__))
+graphics_bind_draw_arc_helper(VmState *state, bool fill) {
+  VmValue _4 = POP();
+  VmValue _3 = POP();
+  VmValue _2 = POP();
+  VmValue _1 = POP();
+  VmValue _0 = POP();
+  int32_t angle_start = NUM_DEG_AS_PBL_ANGLE(COERCE_INT(_0));
+  int32_t angle_end = NUM_DEG_AS_PBL_ANGLE(COERCE_INT(_1));
+  int32_t x = COERCE_INT(_2);
+  int32_t y = COERCE_INT(_3);
+  int32_t radius = COERCE_INT(_4);
+  if (fill) {
+    graphics_fill_radial(context,
+                         GRect(x - radius, y - radius, radius * 2, radius * 2),
+                         GOvalScaleModeFitCircle, 0, angle_start, angle_end);
+  } else {
+    graphics_draw_arc(context,
+                      GRect(x - radius, y - radius, radius * 2, radius * 2),
+                      GOvalScaleModeFitCircle, angle_start, angle_end);
+  }
+  cleanup_val(state, _4);
+  cleanup_val(state, _3);
+  cleanup_val(state, _2);
+  cleanup_val(state, _1);
+  cleanup_val(state, _0);
+}
+
+PBL_BIND(graphics_bind_draw_arc) {
+  graphics_bind_draw_arc_helper(state, false);
+}
+
+PBL_BIND(graphics_bind_fill_arc) { graphics_bind_draw_arc_helper(state, true); }
+
+static void __attribute((__always_inline__))
+graphics_bind_circle(VmState *state, bool fill) {
+  VmValue _3 = POP();
+  VmValue _2 = POP();
+  VmValue _1 = POP();
+  int32_t x = COERCE_INT(_1);
+  int32_t y = COERCE_INT(_2);
+  int32_t radius = COERCE_INT(_3);
+  if (fill) {
+    graphics_fill_circle(context, GPoint(x, y), radius);
+  } else {
+    graphics_draw_circle(context, GPoint(x, y), radius);
+  }
+  cleanup_val(state, _3);
+  cleanup_val(state, _2);
+  cleanup_val(state, _1);
+}
+
+PBL_BIND(graphics_bind_draw_circle) { graphics_bind_circle(state, false); }
+
+PBL_BIND(graphics_bind_fill_circle) { graphics_bind_circle(state, true); }
+
+static void __attribute((__always_inline__)) graphics_bind_rect(VmState *state,
+                                                                bool fill) {
+  VmValue _b = POP();
+  VmValue _c = POP();
+  VmValue _d = POP();
+  VmValue _e = POP();
+  int32_t x = COERCE_INT(_e);
+  int32_t y = COERCE_INT(_d);
+  int32_t width = COERCE_INT(_c);
+  int32_t height = COERCE_INT(_b);
+  if (fill) {
+    graphics_fill_rect(context, GRect(x, y, width, height), 0, GCornerNone);
+  } else {
+    graphics_draw_rect(context, GRect(x, y, width, height));
+  }
+  cleanup_val(state, _b);
+  cleanup_val(state, _c);
+  cleanup_val(state, _d);
+  cleanup_val(state, _e);
+}
+
+PBL_BIND(graphics_bind_draw_rect) { graphics_bind_rect(state, false); }
+
+PBL_BIND(graphics_bind_fill_rect) { graphics_bind_rect(state, true); }
+
+PBL_BIND(graphics_bind_draw_line) {
+  VmValue _b = POP();
+  VmValue _c = POP();
+  VmValue _d = POP();
+  VmValue _e = POP();
+  int32_t x1 = COERCE_INT(_e);
+  int32_t y1 = COERCE_INT(_d);
+  int32_t x2 = COERCE_INT(_c);
+  int32_t y2 = COERCE_INT(_b);
+  graphics_draw_line(context, GPoint(x1, y1), GPoint(x2, y2));
+  cleanup_val(state, _b);
+  cleanup_val(state, _c);
+  cleanup_val(state, _d);
+  cleanup_val(state, _e);
+}
+
+static GTextAlignment context_alignment = GTextAlignmentCenter;
+
+const char *font_keys[] = {
+    FONT_KEY_GOTHIC_18_BOLD,
+    FONT_KEY_GOTHIC_24,
+    FONT_KEY_GOTHIC_09,
+    FONT_KEY_GOTHIC_14,
+    FONT_KEY_GOTHIC_14_BOLD,
+    FONT_KEY_GOTHIC_18,
+    FONT_KEY_GOTHIC_24_BOLD,
+    FONT_KEY_GOTHIC_28,
+    FONT_KEY_GOTHIC_28_BOLD,
+    FONT_KEY_BITHAM_30_BLACK,
+    FONT_KEY_BITHAM_42_BOLD,
+    FONT_KEY_BITHAM_42_LIGHT,
+    FONT_KEY_BITHAM_42_MEDIUM_NUMBERS,
+    FONT_KEY_BITHAM_34_MEDIUM_NUMBERS,
+    FONT_KEY_BITHAM_34_LIGHT_SUBSET,
+    FONT_KEY_BITHAM_18_LIGHT_SUBSET,
+    FONT_KEY_ROBOTO_CONDENSED_21,
+    FONT_KEY_ROBOTO_BOLD_SUBSET_49,
+    FONT_KEY_DROID_SERIF_28_BOLD,
+    FONT_KEY_LECO_20_BOLD_NUMBERS,
+    FONT_KEY_LECO_26_BOLD_NUMBERS_AM_PM,
+    FONT_KEY_LECO_32_BOLD_NUMBERS,
+    FONT_KEY_LECO_36_BOLD_NUMBERS,
+    FONT_KEY_LECO_38_BOLD_NUMBERS,
+    FONT_KEY_LECO_42_NUMBERS,
+    FONT_KEY_LECO_28_LIGHT_NUMBERS,
+    FONT_KEY_FONT_FALLBACK,
+};
+
+PBL_BIND(graphics_bind_set_alignment) {
+  VmValue _1 = POP();
+  int32_t align = COERCE_INT(_1);
+  context_alignment = align < 0   ? GTextAlignmentLeft
+                      : align > 0 ? GTextAlignmentRight
+                                  : GTextAlignmentCenter;
+  cleanup_val(state, _1);
+}
+
+PBL_BIND(graphics_bind_draw_text) {
+  VmValue _4 = POP();
+  VmValue _3 = POP();
+  VmValue _2 = POP();
+  VmValue _1 = POP();
+  VmString *string = COERCE_STR(_4);
+  const char *cstring = string->value;
+  int32_t font_index = COERCE_INT(_3);
+  int32_t x = COERCE_INT(_2);
+  int32_t y = COERCE_INT(_1);
+  GFont font = fonts_get_system_font(font_keys[font_index]);
+  GSize size = graphics_text_layout_get_content_size(
+      cstring, font, GRect(0, 0, 10000, 10000), GTextOverflowModeWordWrap,
+      GTextAlignmentLeft);
+  switch (context_alignment) {
+  case GTextAlignmentLeft:
+    break;
+  case GTextAlignmentCenter:
+    x -= size.w;
+    break;
+  case GTextAlignmentRight:
+    x -= size.w / 2;
+    break;
+  }
+  graphics_draw_text(context, cstring, font, GRect(x, y, 10000, 10000),
+                     GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
+  cleanup_val_str(state, string);
+  cleanup_val(state, _3);
+  cleanup_val(state, _2);
+  cleanup_val(state, _1);
 }
 
 PBL_BIND(controls_wait);

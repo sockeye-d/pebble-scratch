@@ -46,10 +46,11 @@ void set_var(VmState *state, size_t var_ref, VmValue new_value) {
 
 void cleanup_val(VmState *state, VmValue value) {
   if (value.type == TYPE_STRING) {
-    // Check to make sure this string isn't already stored in a variable.
     string_unref(value.string);
   }
 }
+
+void cleanup_val_str(VmState *state, VmString *value) { string_unref(value); }
 
 #define VM_STRING_MINIMUM_ALLOC 4
 
@@ -193,8 +194,7 @@ const VmString string_false = (VmString){
     .value = "false",
 };
 
-static inline __attribute__((__always_inline__)) VmString *
-coerce_str(VmValue value) {
+inline __attribute__((__always_inline__)) VmString *coerce_str(VmValue value) {
   if (value.type == TYPE_STRING) {
     return value.string;
   }
@@ -205,8 +205,7 @@ coerce_str(VmValue value) {
   return string_fmt("%.2f", NUM_AS_FLOAT(value.num));
 }
 
-static inline __attribute__((__always_inline__)) bool
-coerce_bool(VmValue value) {
+inline __attribute__((__always_inline__)) bool coerce_bool(VmValue value) {
   if (value.type == TYPE_BOOL) {
     return value.b != 0;
   }
@@ -571,8 +570,8 @@ VmStepResult vm_step(VmState *state) {
     PUSH() = (VmValue){.type = TYPE_STRING,
                        .string = string_cat(a->value, b->value)};
     REF_STACK();
-    cleanup_val(state, _a);
-    cleanup_val(state, _b);
+    cleanup_val_str(state, a);
+    cleanup_val_str(state, b);
   } break;
   case OP_SUBSTR: {
     VmValue _b = POP();
@@ -586,7 +585,7 @@ VmStepResult vm_step(VmState *state) {
         .string = string_substring(str->value, start, end),
     };
     REF_STACK();
-    cleanup_val(state, _a);
+    cleanup_val_str(state, str);
     cleanup_val(state, _b);
     cleanup_val(state, _c);
   } break;
@@ -602,9 +601,9 @@ VmStepResult vm_step(VmState *state) {
         .string = string_substitute(str->value, what->value, with->value),
     };
     REF_STACK();
-    cleanup_val(state, _a);
-    cleanup_val(state, _b);
-    cleanup_val(state, _c);
+    cleanup_val_str(state, str);
+    cleanup_val_str(state, with);
+    cleanup_val_str(state, what);
   } break;
   case OP_FIND: {
     VmValue _a = POP();
@@ -616,8 +615,8 @@ VmStepResult vm_step(VmState *state) {
         .type = TYPE_NUM,
         .num = location == (size_t)-1 ? INT_AS_NUM(-1) : INT_AS_NUM(location),
     };
-    cleanup_val(state, _a);
-    cleanup_val(state, _b);
+    cleanup_val_str(state, str);
+    cleanup_val_str(state, subject);
   } break;
   case OP_HAS: {
     VmValue _b = POP();
@@ -628,8 +627,8 @@ VmStepResult vm_step(VmState *state) {
         .type = TYPE_NUM,
         .num = string_find(str->value, subject->value) != (size_t)-1 ? 1 : 0,
     };
-    cleanup_val(state, _a);
-    cleanup_val(state, _b);
+    cleanup_val_str(state, str);
+    cleanup_val_str(state, subject);
   } break;
   case OP_LEN: {
     VmValue _a = POP();
@@ -638,7 +637,7 @@ VmStepResult vm_step(VmState *state) {
         .type = TYPE_NUM,
         .num = strlen(str->value) << VM_NUM_RATIO_L2,
     };
-    cleanup_val(state, _a);
+    cleanup_val_str(state, str);
   } break;
   case OP_FMT: {
     VmValue _b = POP();
@@ -657,7 +656,7 @@ VmStepResult vm_step(VmState *state) {
     VmValue _a = POP();
     VmString *str = COERCE_STR(_a);
     printf("%s\n", str->value);
-    cleanup_val(state, _a);
+    cleanup_val_str(state, str);
   } break;
   case OP_CALL_FOREIGN: {
     size_t call_id = READ_INSTRUCTION().var;

@@ -34,7 +34,13 @@ console.log(theme)
 const blocklyDiv = document.getElementById('blocklyDiv')!
 const output = document.getElementById('generatedCode')!
 
-const ws = Blockly.inject(blocklyDiv, { toolbox, renderer: 'zelos', theme: theme })
+const ws = Blockly.inject(blocklyDiv, {
+  toolbox: { kind: 'categoryToolbox', contents: [] },
+  renderer: 'zelos',
+  theme: theme,
+})
+
+ws.updateToolbox(toolbox(ws))
 
 const body = document.querySelector('body')
 

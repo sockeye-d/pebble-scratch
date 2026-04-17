@@ -2,6 +2,36 @@ import { BlockCompiler, VmInstruction } from '..'
 import { PebbleForeignFunc } from '../ffi'
 import * as ops from '../ops'
 
+const allFonts = [
+  'FONT_KEY_GOTHIC_18_BOLD',
+  'FONT_KEY_GOTHIC_24',
+  'FONT_KEY_GOTHIC_09',
+  'FONT_KEY_GOTHIC_14',
+  'FONT_KEY_GOTHIC_14_BOLD',
+  'FONT_KEY_GOTHIC_18',
+  'FONT_KEY_GOTHIC_24_BOLD',
+  'FONT_KEY_GOTHIC_28',
+  'FONT_KEY_GOTHIC_28_BOLD',
+  'FONT_KEY_BITHAM_30_BLACK',
+  'FONT_KEY_BITHAM_42_BOLD',
+  'FONT_KEY_BITHAM_42_LIGHT',
+  'FONT_KEY_BITHAM_42_MEDIUM_NUMBERS',
+  'FONT_KEY_BITHAM_34_MEDIUM_NUMBERS',
+  'FONT_KEY_BITHAM_34_LIGHT_SUBSET',
+  'FONT_KEY_BITHAM_18_LIGHT_SUBSET',
+  'FONT_KEY_ROBOTO_CONDENSED_21',
+  'FONT_KEY_ROBOTO_BOLD_SUBSET_49',
+  'FONT_KEY_DROID_SERIF_28_BOLD',
+  'FONT_KEY_LECO_20_BOLD_NUMBERS',
+  'FONT_KEY_LECO_26_BOLD_NUMBERS_AM_PM',
+  'FONT_KEY_LECO_32_BOLD_NUMBERS',
+  'FONT_KEY_LECO_36_BOLD_NUMBERS',
+  'FONT_KEY_LECO_38_BOLD_NUMBERS',
+  'FONT_KEY_LECO_42_NUMBERS',
+  'FONT_KEY_LECO_28_LIGHT_NUMBERS',
+  'FONT_KEY_FONT_FALLBACK',
+]
+
 type ForeignBlockCompiler = {
   fn?: PebbleForeignFunc | null
   args?: (
@@ -16,14 +46,60 @@ const internal: Record<string, ForeignBlockCompiler | undefined> = {
     fn: null,
     generator: (_compiler, block) => ops.raw(block.getFieldValue('COLOR')),
   },
-  graphics_set_fill_color: {
+  graphics_bind_set_fill_color: {
     args: [{ input: 'COLOR' }],
   },
-  graphics_set_stroke_color: {
+  graphics_bind_set_stroke_color: {
     args: [{ input: 'COLOR' }],
   },
-  graphics_set_stroke_width: {
+  graphics_bind_set_stroke_width: {
     args: [{ input: 'WIDTH' }],
+  },
+  graphics_bind_draw_arc: {
+    args: [{ input: 'START' }, { input: 'END' }, { input: 'X' }, { input: 'Y' }, { input: 'RADIUS' }],
+  },
+  graphics_bind_fill_arc: {
+    args: [{ input: 'START' }, { input: 'END' }, { input: 'X' }, { input: 'Y' }, { input: 'RADIUS' }],
+  },
+  graphics_bind_draw_circle: {
+    args: [{ input: 'X' }, { input: 'Y' }, { input: 'RADIUS' }],
+  },
+  graphics_bind_fill_circle: {
+    args: [{ input: 'X' }, { input: 'Y' }, { input: 'RADIUS' }],
+  },
+  graphics_bind_draw_rect: {
+    args: [{ input: 'X' }, { input: 'Y' }, { input: 'W' }, { input: 'H' }],
+  },
+  graphics_bind_fill_rect: {
+    args: [{ input: 'X' }, { input: 'Y' }, { input: 'W' }, { input: 'H' }],
+  },
+  graphics_bind_draw_line: {
+    args: [{ input: 'X1' }, { input: 'Y1' }, { input: 'X2' }, { input: 'Y2' }],
+  },
+  graphics_bind_set_alignment: {
+    args: [
+      {
+        field: 'ALIGNMENT',
+        op: (a: any) => ops.num(a == 'R' ? 1 : a == 'C' ? 0 : -1),
+      },
+    ],
+  },
+  graphics_bind_draw_text: {
+    args: [
+      {
+        input: 'TEXT',
+      },
+      {
+        field: 'FONT',
+        op: (key: any) => ops.num(allFonts.indexOf(key)),
+      },
+      {
+        input: 'X',
+      },
+      {
+        input: 'Y',
+      },
+    ],
   },
   events_main: undefined,
   events_on_button_pressed: undefined,

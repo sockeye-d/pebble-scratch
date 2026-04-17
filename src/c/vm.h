@@ -97,6 +97,8 @@ typedef struct {
 #define FLOAT_AS_NUM(m_float) (VmNum)((m_float) * VM_NUM_RATIO)
 #define NUM_AS_DOUBL(m_num) ((m_num) / (double)VM_NUM_RATIO)
 #define DOUBL_AS_NUM(m_float) (VmNum)((m_float) * VM_NUM_RATIO)
+#define NUM_DEG_AS_PBL_ANGLE(m_deg)                                            \
+  (m_deg) * (TRIG_MAX_ANGLE / VM_NUM_RATIO) / 360
 
 #define READ_INSTRUCTION() (state->instructions[state->pc++])
 #define PEEK_INSTRUCTION() (state->instructions[state->pc])
@@ -163,7 +165,11 @@ struct VmState {
   VmInstruction *instructions;
 };
 
+VmString *coerce_str(VmValue value);
+
 void cleanup_val(VmState *state, VmValue value);
+void cleanup_val_str(VmState *state, VmString *value);
+bool coerce_bool(VmValue value);
 
 VmStepResult vm_step(VmState *state);
 void vm_print_state(VmState *state);
