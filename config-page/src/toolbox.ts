@@ -12,11 +12,13 @@ function makeDefaultBlock(workspace: blockly.Workspace, blockName: string): Bloc
       type: blockName,
     }
   }
+  const inputs = makeNumberInputs({}, ...block.inputList.map((e) => e.name))
+  workspace.removeBlockById(block.id)
 
   return {
     kind: 'block',
     type: blockName,
-    inputs: makeNumberInputs({}, ...block.inputList.map((e) => e.name)),
+    inputs,
   }
 }
 
