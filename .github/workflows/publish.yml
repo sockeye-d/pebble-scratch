@@ -16,11 +16,6 @@ jobs:
         uses: actions/upload-pages-artifact@v4
         with:
           path: config-page/dist
-      - uses: actions/git-pages@v2
-        with:
-          site: 'https://${{ forge.repository_owner }}.codeberg.page/pebble-scratch/'
-          token: ${{ forge.token }}
-          source: config-page/dist
   deploy:
     needs: build
     runs-on: ubuntu-latest
