@@ -1,0 +1,36 @@
+name: Publish config page
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v5
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - run: |
+          cd config-page
+          npm build
+      - name: Upload static files as artifact
+        id: deployment
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: config-page/dist
+      - uses: actions/git-pages@v2
+        with:
+          site: 'https://${{ forge.repository_owner }}.codeberg.page/pebble-scratch/'
+          token: ${{ forge.token }}
+          source: config-page/dist
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
