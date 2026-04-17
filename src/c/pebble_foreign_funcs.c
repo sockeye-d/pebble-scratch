@@ -3,7 +3,7 @@
 #include "vm.h"
 #include <pebble.h>
 
-#define PBL_BIND(m_name) void m_name(VmState *state)
+#define PBL_BIND(m_name) VmStepResult m_name(VmState *state)
 
 static AccelData last_accel_data;
 GContext *context = NULL;
@@ -26,6 +26,7 @@ PBL_BIND(graphics_bind_set_fill_color) {
     graphics_context_set_text_color(context, (GColor){.argb = color});
   }
   cleanup_val(state, _a);
+  return STEP_RESULT_CONTINUE;
 }
 
 PBL_BIND(graphics_bind_set_stroke_color) {
@@ -40,6 +41,7 @@ PBL_BIND(graphics_bind_set_stroke_color) {
     graphics_context_set_stroke_color(context, (GColor){.argb = color});
   }
   cleanup_val(state, _a);
+  return STEP_RESULT_CONTINUE;
 }
 
 PBL_BIND(graphics_bind_set_stroke_width) {
@@ -52,9 +54,10 @@ PBL_BIND(graphics_bind_set_stroke_width) {
   }
   GCTX_GUARD { graphics_context_set_stroke_width(context, width); }
   cleanup_val(state, _a);
+  return STEP_RESULT_CONTINUE;
 }
 
-static void __attribute__((__always_inline__))
+inline static void __attribute__((__always_inline__))
 graphics_bind_draw_arc_helper(VmState *state, bool fill) {
   VmValue _4 = POP();
   VmValue _3 = POP();
@@ -86,11 +89,15 @@ graphics_bind_draw_arc_helper(VmState *state, bool fill) {
 
 PBL_BIND(graphics_bind_draw_arc) {
   graphics_bind_draw_arc_helper(state, false);
+  return STEP_RESULT_CONTINUE;
 }
 
-PBL_BIND(graphics_bind_fill_arc) { graphics_bind_draw_arc_helper(state, true); }
+PBL_BIND(graphics_bind_fill_arc) {
+  graphics_bind_draw_arc_helper(state, true);
+  return STEP_RESULT_CONTINUE;
+}
 
-static void __attribute((__always_inline__))
+inline static void __attribute((__always_inline__))
 graphics_bind_circle(VmState *state, bool fill) {
   VmValue _3 = POP();
   VmValue _2 = POP();
@@ -110,12 +117,18 @@ graphics_bind_circle(VmState *state, bool fill) {
   cleanup_val(state, _1);
 }
 
-PBL_BIND(graphics_bind_draw_circle) { graphics_bind_circle(state, false); }
+PBL_BIND(graphics_bind_draw_circle) {
+  graphics_bind_circle(state, false);
+  return STEP_RESULT_CONTINUE;
+}
 
-PBL_BIND(graphics_bind_fill_circle) { graphics_bind_circle(state, true); }
+PBL_BIND(graphics_bind_fill_circle) {
+  graphics_bind_circle(state, true);
+  return STEP_RESULT_CONTINUE;
+}
 
-static void __attribute((__always_inline__)) graphics_bind_rect(VmState *state,
-                                                                bool fill) {
+inline static void __attribute((__always_inline__))
+graphics_bind_rect(VmState *state, bool fill) {
   VmValue _b = POP();
   VmValue _c = POP();
   VmValue _d = POP();
@@ -137,9 +150,15 @@ static void __attribute((__always_inline__)) graphics_bind_rect(VmState *state,
   cleanup_val(state, _e);
 }
 
-PBL_BIND(graphics_bind_draw_rect) { graphics_bind_rect(state, false); }
+PBL_BIND(graphics_bind_draw_rect) {
+  graphics_bind_rect(state, false);
+  return STEP_RESULT_CONTINUE;
+}
 
-PBL_BIND(graphics_bind_fill_rect) { graphics_bind_rect(state, true); }
+PBL_BIND(graphics_bind_fill_rect) {
+  graphics_bind_rect(state, true);
+  return STEP_RESULT_CONTINUE;
+}
 
 PBL_BIND(graphics_bind_draw_line) {
   VmValue _b = POP();
@@ -157,6 +176,7 @@ PBL_BIND(graphics_bind_draw_line) {
   cleanup_val(state, _c);
   cleanup_val(state, _d);
   cleanup_val(state, _e);
+  return STEP_RESULT_CONTINUE;
 }
 
 static GTextAlignment context_alignment = GTextAlignmentCenter;
@@ -198,6 +218,7 @@ PBL_BIND(graphics_bind_set_alignment) {
                       : align > 0 ? GTextAlignmentRight
                                   : GTextAlignmentCenter;
   cleanup_val(state, _1);
+  return STEP_RESULT_CONTINUE;
 }
 
 PBL_BIND(graphics_bind_draw_text) {
@@ -232,6 +253,7 @@ PBL_BIND(graphics_bind_draw_text) {
   cleanup_val(state, _3);
   cleanup_val(state, _2);
   cleanup_val(state, _1);
+  return STEP_RESULT_CONTINUE;
 }
 
 typedef struct {
@@ -271,6 +293,7 @@ PBL_BIND(graphics_bind_path_scope_begin) {
       .last_x = 0,
       .last_y = 0,
   };
+  return STEP_RESULT_CONTINUE;
 }
 
 PBL_BIND(graphics_bind_path_scope_end) {
@@ -294,6 +317,7 @@ PBL_BIND(graphics_bind_path_scope_end) {
   }
   free(path.points.items);
   cleanup_val(state, _1);
+  return STEP_RESULT_CONTINUE;
 }
 
 PBL_BIND(graphics_bind_path_move_to) {
@@ -310,6 +334,7 @@ PBL_BIND(graphics_bind_path_move_to) {
   }
   cleanup_val(state, _2);
   cleanup_val(state, _1);
+  return STEP_RESULT_CONTINUE;
 }
 
 PBL_BIND(graphics_bind_path_move_by) {
@@ -326,9 +351,11 @@ PBL_BIND(graphics_bind_path_move_by) {
   }
   cleanup_val(state, _2);
   cleanup_val(state, _1);
+  return STEP_RESULT_CONTINUE;
 }
 
 PBL_BIND(controls_wait);
+
 PBL_BIND(sensors_accelerometer) {
   const VmValue _a = POP();
   const VmNum axis = COERCE_NUM(_a);
@@ -340,12 +367,14 @@ PBL_BIND(sensors_accelerometer) {
                          : (last_accel_data.x * VM_NUM_RATIO / 1000),
   };
   cleanup_val(state, _a);
+  return STEP_RESULT_CONTINUE;
 }
 PBL_BIND(sensors_battery) {
   PUSH() = (VmValue){
       .type = TYPE_NUM,
       .num = INT_AS_NUM(battery_state_service_peek().charge_percent),
   };
+  return STEP_RESULT_CONTINUE;
 }
 PBL_BIND(sensors_battery_state) {
   const VmValue _a = POP();
@@ -356,12 +385,14 @@ PBL_BIND(sensors_battery_state) {
       .b = mode == 0 ? battery_state.is_charging : battery_state.is_plugged,
   };
   cleanup_val(state, _a);
+  return STEP_RESULT_CONTINUE;
 }
 PBL_BIND(sensors_phone_connected) {
   PUSH() = (VmValue){
       .type = TYPE_BOOL,
       .b = connection_service_peek_pebble_app_connection(),
   };
+  return STEP_RESULT_CONTINUE;
 }
 PBL_BIND(time_wall_time) {
   char *time = malloc(sizeof(char) * 8);
@@ -371,38 +402,39 @@ PBL_BIND(time_wall_time) {
       .type = TYPE_STRING,
       .string = time_str,
   };
+  return STEP_RESULT_CONTINUE;
 }
 PBL_BIND(time_time_24h) {
   PUSH() = (VmValue){
       .type = TYPE_BOOL,
       .b = clock_is_24h_style(),
   };
+  return STEP_RESULT_CONTINUE;
 }
 PBL_BIND(time_time) {
   const VmValue _a = POP();
   const VmNum mode = COERCE_NUM(_a);
   time_t t = time(NULL);
-  tm current_time;
-  localtime_r(&t, &current_time);
+  tm *current_time = localtime(&t);
   int32_t time;
   switch (mode) {
   default: {
-    time = current_time.tm_sec;
+    time = current_time->tm_sec;
   } break;
   case 1: {
-    time = current_time.tm_min;
+    time = current_time->tm_min;
   } break;
   case 2: {
-    time = current_time.tm_hour;
+    time = current_time->tm_hour;
   } break;
   case 3: {
-    time = current_time.tm_wday;
+    time = current_time->tm_wday;
   } break;
   case 4: {
-    time = current_time.tm_mon;
+    time = current_time->tm_mon;
   } break;
   case 5: {
-    time = (int32_t)current_time.tm_year + 1900;
+    time = (int32_t)current_time->tm_year + 1900;
   } break;
   }
   PUSH() = (VmValue){
@@ -410,24 +442,27 @@ PBL_BIND(time_time) {
       .num = INT_AS_NUM(time),
   };
   cleanup_val(state, _a);
+  return STEP_RESULT_CONTINUE;
 }
 PBL_BIND(sensors_current_watch_model) {
   PUSH() = (VmValue){
       .type = TYPE_NUM,
       .num = INT_AS_NUM(watch_info_get_model()),
   };
+  return STEP_RESULT_CONTINUE;
 }
 PBL_BIND(sensors_current_watch_color) {
   PUSH() = (VmValue){
       .type = TYPE_NUM,
       .num = INT_AS_NUM(watch_info_get_color()),
   };
+  return STEP_RESULT_CONTINUE;
 }
 
 #if __has_include("pebble_foreign_funcs_gen") && !defined(AST_DUMP)
 #include "pebble_foreign_funcs_gen"
 #endif
 
-void pebble_foreign_func_call_handler(VmState *state, int32_t call_id) {
-  handlers[call_id](state);
+VmStepResult pebble_foreign_func_call_handler(VmState *state, int32_t call_id) {
+  return handlers[call_id](state);
 }

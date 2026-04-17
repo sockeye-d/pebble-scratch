@@ -613,7 +613,8 @@ VmStepResult vm_step(VmState *state) {
     size_t location = string_find(str->value, subject->value);
     PUSH() = (VmValue){
         .type = TYPE_NUM,
-        .num = location == (size_t)-1 ? INT_AS_NUM(-1) : INT_AS_NUM(location),
+        .num = location == (size_t)-1 ? INT_AS_NUM(-1)
+                                      : INT_AS_NUM((int32_t)location),
     };
     cleanup_val_str(state, str);
     cleanup_val_str(state, subject);
@@ -662,7 +663,7 @@ VmStepResult vm_step(VmState *state) {
     size_t call_id = READ_INSTRUCTION().var;
     VmCallHandler handler = state->call_handler;
     if (handler != NULL) {
-      handler(state, call_id);
+      return handler(state, call_id);
     }
   } break;
   case OP_TRUE: {

@@ -1,0 +1,18 @@
+name: Publish config page
+on:
+  push:
+jobs:
+  publish:
+    runs-on: codeberg-tiny
+    steps:
+      - uses: actions/checkout@v5
+      - run: |
+          # Use your favorite static site generator here!
+          cd config-page
+          npm i
+          npm build
+      - uses: actions/git-pages@v2
+        with:
+          site: 'https://${{ forge.repository_owner }}.codeberg.page/pebble-scratch/'
+          token: ${{ forge.token }}
+          source: config-page/dist

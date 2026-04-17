@@ -6,9 +6,10 @@
 #include <stdint.h>
 
 typedef enum {
-  STEP_RESULT_DONE,
   STEP_RESULT_CONTINUE,
   STEP_RESULT_SUSPEND,
+  STEP_RESULT_PAUSE,
+  STEP_RESULT_DONE,
 } VmStepResult;
 
 typedef enum {
@@ -155,7 +156,7 @@ typedef union {
 
 typedef struct VmState VmState;
 
-typedef void (*VmCallHandler)(VmState *state, int32_t call_id);
+typedef VmStepResult (*VmCallHandler)(VmState *state, int32_t call_id);
 
 struct VmState {
   VmCallHandler call_handler;

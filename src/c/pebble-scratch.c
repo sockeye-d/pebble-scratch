@@ -1,60 +1,95 @@
+#include "pebble_foreign_funcs.h"
+#include "vm.h"
 #include <pebble.h>
 
 static Window *s_window;
 static TextLayer *s_text_layer;
 
-static void prv_select_click_handler(ClickRecognizerRef recognizer, void *context) {
-	text_layer_set_text(s_text_layer, "Select");
+VmValue vars[256];
+
+static void tick_vm(void *data) {
+  VmState *state = (VmState *)data;
+  while (true) {
+    const VmStepResult result = vm_step(state);
+    if (result == STEP_RESULT_DONE || result == STEP_RESULT_PAUSE) {
+      break;
+    } else if (result == STEP_RESULT_SUSPEND) {
+      app_timer_register(100, tick_vm, state);
+    }
+  }
+}
+
+VmStepResult controls_wait(VmState *state) {
+  VmValue _1 = POP();
+  VmNum duration = COERCE_NUM(_1);
+  app_timer_register(duration * 1000 / VM_NUM_RATIO, tick_vm, state);
+  cleanup_val(state, _1);
+  return STEP_RESULT_PAUSE;
+}
+
+VmState *init_vm(VmInstruction *instructions) {
+  VmState *state = malloc(sizeof(VmState));
+  state->instructions = instructions;
+  state->call_handler = pebble_foreign_func_call_handler;
+  state->vars = vars;
+  state->pc = 0;
+  state->stack_ptr = 0;
+  tick_vm((void *)state);
+}
+
+static void prv_select_click_handler(ClickRecognizerRef recognizer,
+                                     void *context) {
+  text_layer_set_text(s_text_layer, "Select");
 }
 
 static void prv_up_click_handler(ClickRecognizerRef recognizer, void *context) {
-	text_layer_set_text(s_text_layer, "Up");
+  text_layer_set_text(s_text_layer, "Up");
 }
 
-static void prv_down_click_handler(ClickRecognizerRef recognizer, void *context) {
-	text_layer_set_text(s_text_layer, "Down");
+static void prv_down_click_handler(ClickRecognizerRef recognizer,
+                                   void *context) {
+  text_layer_set_text(s_text_layer, "Down");
 }
 
 static void prv_click_config_provider(void *context) {
-	window_single_click_subscribe(BUTTON_ID_SELECT, prv_select_click_handler);
-	window_single_click_subscribe(BUTTON_ID_UP, prv_up_click_handler);
-	window_single_click_subscribe(BUTTON_ID_DOWN, prv_down_click_handler);
+  window_single_click_subscribe(BUTTON_ID_SELECT, prv_select_click_handler);
+  window_single_click_subscribe(BUTTON_ID_UP, prv_up_click_handler);
+  window_single_click_subscribe(BUTTON_ID_DOWN, prv_down_click_handler);
 }
 
 static void prv_window_load(Window *window) {
-	Layer *window_layer = window_get_root_layer(window);
-	GRect bounds = layer_get_bounds(window_layer);
+  Layer *window_layer = window_get_root_layer(window);
+  GRect bounds = layer_get_bounds(window_layer);
 
-	s_text_layer = text_layer_create(GRect(0, 72, bounds.size.w, 20));
-	text_layer_set_text(s_text_layer, "Press a button");
-	text_layer_set_text_alignment(s_text_layer, GTextAlignmentCenter);
-	layer_add_child(window_layer, text_layer_get_layer(s_text_layer));
+  s_text_layer = text_layer_create(GRect(0, 72, bounds.size.w, 20));
+  text_layer_set_text(s_text_layer, "Press a button");
+  text_layer_set_text_alignment(s_text_layer, GTextAlignmentCenter);
+  layer_add_child(window_layer, text_layer_get_layer(s_text_layer));
 }
 
 static void prv_window_unload(Window *window) {
-	text_layer_destroy(s_text_layer);
+  text_layer_destroy(s_text_layer);
 }
 
 static void prv_init(void) {
-	s_window = window_create();
-	window_set_click_config_provider(s_window, prv_click_config_provider);
-	window_set_window_handlers(s_window, (WindowHandlers){
-												 .load = prv_window_load,
-												 .unload = prv_window_unload,
-										 });
-	const bool animated = true;
-	window_stack_push(s_window, animated);
+  s_window = window_create();
+  window_set_click_config_provider(s_window, prv_click_config_provider);
+  window_set_window_handlers(s_window, (WindowHandlers){
+                                           .load = prv_window_load,
+                                           .unload = prv_window_unload,
+                                       });
+  const bool animated = true;
+  window_stack_push(s_window, animated);
 }
 
-static void prv_deinit(void) {
-	window_destroy(s_window);
-}
+static void prv_deinit(void) { window_destroy(s_window); }
 
 int main(void) {
-	prv_init();
+  prv_init();
 
-	APP_LOG(APP_LOG_LEVEL_DEBUG, "Done initializing, pushed window: %p", s_window);
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Done initializing, pushed window: %p",
+          s_window);
 
-	app_event_loop();
-	prv_deinit();
+  app_event_loop();
+  prv_deinit();
 }

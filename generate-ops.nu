@@ -16,7 +16,7 @@ def generate-ffi [--output-file: path] {
   let funcs = open src/c/pebble_foreign_funcs.c | lines | where $it =~ '^PBL_BIND' | parse --regex 'PBL_BIND\((?P<name>[a-zA-Z0-9_]+)\)' | get name
   $"export enum PebbleForeignFunc {\n($funcs | str pascal-case | each { '  ' + $in } | str join ",\n"),\n}"
       | save --force $output_file
-  $"void \(*const handlers[]\)\(VmState *state\) = {\n($funcs | each { '  ' + $in } | str join ",\n")\n};"
+  $"VmStepResult \(*const handlers[]\)\(VmState *state\) = {\n($funcs | each { '  ' + $in } | str join ",\n")\n};"
       | save --force src/c/pebble_foreign_funcs_gen
   let bound_funcs = open config-page/src/blocks/pebble_blocks.ts | collect
       | parse --regex '(// BEGIN BLOCKS(?:.|\n)*// END BLOCKS)' | get capture0.0
