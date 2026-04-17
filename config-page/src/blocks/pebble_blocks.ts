@@ -584,6 +584,71 @@ const graphics_bind_draw_text = {
   colour: 80,
 }
 
+const graphics_bind_path_scope = {
+  type: 'graphics_bind_path_scope',
+  message0: 'record path %1 %2 and draw %3',
+  args0: [
+    {
+      type: 'input_dummy',
+    },
+    {
+      type: 'input_statement',
+      name: 'DO',
+    },
+    {
+      type: 'field_dropdown',
+      name: 'MODE',
+      options: [
+        ['filled', 'FILLED'],
+        ['outlined (closed)', 'OUTLINED'],
+        ['outlined (open)', 'OUTLINED_OPEN'],
+      ],
+    },
+  ],
+  inputsInline: true,
+  previousStatement: null,
+  nextStatement: null,
+  colour: 100,
+}
+
+const graphics_bind_path_move_to = {
+  type: 'graphics_bind_path_move_to',
+  message0: 'move to x: %1 y: %2',
+  args0: [
+    {
+      type: 'input_value',
+      name: 'X',
+    },
+    {
+      type: 'input_value',
+      name: 'Y',
+    },
+  ],
+  inputsInline: true,
+  previousStatement: null,
+  nextStatement: null,
+  colour: 100,
+}
+
+const graphics_bind_path_move_by = {
+  type: 'graphics_bind_path_move_by',
+  message0: 'move by x: %1 y: %2',
+  args0: [
+    {
+      type: 'input_value',
+      name: 'X',
+    },
+    {
+      type: 'input_value',
+      name: 'Y',
+    },
+  ],
+  inputsInline: true,
+  previousStatement: null,
+  nextStatement: null,
+  colour: 100,
+}
+
 export const blocks = Blockly.common.createBlockDefinitionsFromJsonArray([
   // BEGIN BLOCKS
   events_on_button_pressed,
@@ -616,5 +681,8 @@ export const blocks = Blockly.common.createBlockDefinitionsFromJsonArray([
   graphics_bind_draw_line,
   graphics_bind_set_alignment,
   graphics_bind_draw_text,
+  graphics_bind_path_scope,
+  graphics_bind_path_move_to,
+  graphics_bind_path_move_by,
   // END BLOCKS
 ])

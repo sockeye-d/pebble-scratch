@@ -21,14 +21,12 @@ const theme = Blockly.Theme.defineTheme('theme', {
   categoryStyles: {
     events_category: { colour: '10' },
     controls_category: { colour: '45' },
-    layers_category: { colour: '60' },
+    layers_category: { colour: '80' },
     time_category: { colour: '250' },
     sensors_category: { colour: '280' },
     graphics_category: { colour: '80' },
   },
 })
-
-console.log(theme)
 
 // Set up UI elements and inject Blockly
 const blocklyDiv = document.getElementById('blocklyDiv')!

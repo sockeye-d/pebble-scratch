@@ -461,6 +461,10 @@ export const toolbox = (workspace: blockly.Workspace): ToolboxDefinition => {
               },
             },
           },
+          {
+            kind: 'label',
+            text: 'Primitives',
+          },
           makeDefaultBlock(workspace, 'graphics_bind_draw_arc'),
           makeDefaultBlock(workspace, 'graphics_bind_fill_arc'),
           makeDefaultBlock(workspace, 'graphics_bind_draw_circle'),
@@ -468,6 +472,10 @@ export const toolbox = (workspace: blockly.Workspace): ToolboxDefinition => {
           makeDefaultBlock(workspace, 'graphics_bind_draw_rect'),
           makeDefaultBlock(workspace, 'graphics_bind_fill_rect'),
           makeDefaultBlock(workspace, 'graphics_bind_draw_line'),
+          {
+            kind: 'label',
+            text: 'Text',
+          },
           {
             kind: 'block',
             type: 'graphics_bind_set_alignment',
@@ -490,6 +498,16 @@ export const toolbox = (workspace: blockly.Workspace): ToolboxDefinition => {
               'Y'
             ),
           },
+          {
+            kind: 'label',
+            text: 'Paths',
+          },
+          {
+            kind: 'block',
+            type: 'graphics_bind_path_scope',
+          },
+          makeDefaultBlock(workspace, 'graphics_bind_path_move_to'),
+          makeDefaultBlock(workspace, 'graphics_bind_path_move_by'),
         ],
       },
       {

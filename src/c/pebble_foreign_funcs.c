@@ -11,6 +11,8 @@ GContext *context = NULL;
 void set_local_gcontext(GContext *ctx) { context = ctx; }
 void clear_local_gcontext() { context = NULL; }
 
+#define GCTX_GUARD if (context != NULL)
+
 PBL_BIND(graphics_bind_set_fill_color) {
   VmValue _a = POP();
   int32_t color = COERCE_RAW(_a);
@@ -19,8 +21,10 @@ PBL_BIND(graphics_bind_set_fill_color) {
   } else if (color > 255) {
     color = 255;
   }
-  graphics_context_set_fill_color(context, (GColor){.argb = color});
-  graphics_context_set_text_color(context, (GColor){.argb = color});
+  GCTX_GUARD {
+    graphics_context_set_fill_color(context, (GColor){.argb = color});
+    graphics_context_set_text_color(context, (GColor){.argb = color});
+  }
   cleanup_val(state, _a);
 }
 
@@ -32,7 +36,9 @@ PBL_BIND(graphics_bind_set_stroke_color) {
   } else if (color > 255) {
     color = 255;
   }
-  graphics_context_set_stroke_color(context, (GColor){.argb = color});
+  GCTX_GUARD {
+    graphics_context_set_stroke_color(context, (GColor){.argb = color});
+  }
   cleanup_val(state, _a);
 }
 
@@ -44,7 +50,7 @@ PBL_BIND(graphics_bind_set_stroke_width) {
   } else if (width > 255) {
     width = 255;
   }
-  graphics_context_set_stroke_width(context, width);
+  GCTX_GUARD { graphics_context_set_stroke_width(context, width); }
   cleanup_val(state, _a);
 }
 
@@ -55,19 +61,21 @@ graphics_bind_draw_arc_helper(VmState *state, bool fill) {
   VmValue _2 = POP();
   VmValue _1 = POP();
   VmValue _0 = POP();
-  int32_t angle_start = NUM_DEG_AS_PBL_ANGLE(COERCE_INT(_0));
-  int32_t angle_end = NUM_DEG_AS_PBL_ANGLE(COERCE_INT(_1));
-  int32_t x = COERCE_INT(_2);
-  int32_t y = COERCE_INT(_3);
-  int32_t radius = COERCE_INT(_4);
-  if (fill) {
-    graphics_fill_radial(context,
-                         GRect(x - radius, y - radius, radius * 2, radius * 2),
-                         GOvalScaleModeFitCircle, 0, angle_start, angle_end);
-  } else {
-    graphics_draw_arc(context,
-                      GRect(x - radius, y - radius, radius * 2, radius * 2),
-                      GOvalScaleModeFitCircle, angle_start, angle_end);
+  GCTX_GUARD {
+    int32_t angle_start = NUM_DEG_AS_PBL_ANGLE(COERCE_INT(_0));
+    int32_t angle_end = NUM_DEG_AS_PBL_ANGLE(COERCE_INT(_1));
+    int32_t x = COERCE_INT(_2);
+    int32_t y = COERCE_INT(_3);
+    int32_t radius = COERCE_INT(_4);
+    if (fill) {
+      graphics_fill_radial(
+          context, GRect(x - radius, y - radius, radius * 2, radius * 2),
+          GOvalScaleModeFitCircle, 0, angle_start, angle_end);
+    } else {
+      graphics_draw_arc(context,
+                        GRect(x - radius, y - radius, radius * 2, radius * 2),
+                        GOvalScaleModeFitCircle, angle_start, angle_end);
+    }
   }
   cleanup_val(state, _4);
   cleanup_val(state, _3);
@@ -87,13 +95,15 @@ graphics_bind_circle(VmState *state, bool fill) {
   VmValue _3 = POP();
   VmValue _2 = POP();
   VmValue _1 = POP();
-  int32_t x = COERCE_INT(_1);
-  int32_t y = COERCE_INT(_2);
-  int32_t radius = COERCE_INT(_3);
-  if (fill) {
-    graphics_fill_circle(context, GPoint(x, y), radius);
-  } else {
-    graphics_draw_circle(context, GPoint(x, y), radius);
+  GCTX_GUARD {
+    int32_t x = COERCE_INT(_1);
+    int32_t y = COERCE_INT(_2);
+    int32_t radius = COERCE_INT(_3);
+    if (fill) {
+      graphics_fill_circle(context, GPoint(x, y), radius);
+    } else {
+      graphics_draw_circle(context, GPoint(x, y), radius);
+    }
   }
   cleanup_val(state, _3);
   cleanup_val(state, _2);
@@ -110,14 +120,16 @@ static void __attribute((__always_inline__)) graphics_bind_rect(VmState *state,
   VmValue _c = POP();
   VmValue _d = POP();
   VmValue _e = POP();
-  int32_t x = COERCE_INT(_e);
-  int32_t y = COERCE_INT(_d);
-  int32_t width = COERCE_INT(_c);
-  int32_t height = COERCE_INT(_b);
-  if (fill) {
-    graphics_fill_rect(context, GRect(x, y, width, height), 0, GCornerNone);
-  } else {
-    graphics_draw_rect(context, GRect(x, y, width, height));
+  GCTX_GUARD {
+    int32_t x = COERCE_INT(_e);
+    int32_t y = COERCE_INT(_d);
+    int32_t width = COERCE_INT(_c);
+    int32_t height = COERCE_INT(_b);
+    if (fill) {
+      graphics_fill_rect(context, GRect(x, y, width, height), 0, GCornerNone);
+    } else {
+      graphics_draw_rect(context, GRect(x, y, width, height));
+    }
   }
   cleanup_val(state, _b);
   cleanup_val(state, _c);
@@ -134,11 +146,13 @@ PBL_BIND(graphics_bind_draw_line) {
   VmValue _c = POP();
   VmValue _d = POP();
   VmValue _e = POP();
-  int32_t x1 = COERCE_INT(_e);
-  int32_t y1 = COERCE_INT(_d);
-  int32_t x2 = COERCE_INT(_c);
-  int32_t y2 = COERCE_INT(_b);
-  graphics_draw_line(context, GPoint(x1, y1), GPoint(x2, y2));
+  GCTX_GUARD {
+    int32_t x1 = COERCE_INT(_e);
+    int32_t y1 = COERCE_INT(_d);
+    int32_t x2 = COERCE_INT(_c);
+    int32_t y2 = COERCE_INT(_b);
+    graphics_draw_line(context, GPoint(x1, y1), GPoint(x2, y2));
+  }
   cleanup_val(state, _b);
   cleanup_val(state, _c);
   cleanup_val(state, _d);
@@ -192,28 +206,124 @@ PBL_BIND(graphics_bind_draw_text) {
   VmValue _2 = POP();
   VmValue _1 = POP();
   VmString *string = COERCE_STR(_4);
-  const char *cstring = string->value;
-  int32_t font_index = COERCE_INT(_3);
-  int32_t x = COERCE_INT(_2);
-  int32_t y = COERCE_INT(_1);
-  GFont font = fonts_get_system_font(font_keys[font_index]);
-  GSize size = graphics_text_layout_get_content_size(
-      cstring, font, GRect(0, 0, 10000, 10000), GTextOverflowModeWordWrap,
-      GTextAlignmentLeft);
-  switch (context_alignment) {
-  case GTextAlignmentLeft:
-    break;
-  case GTextAlignmentCenter:
-    x -= size.w;
-    break;
-  case GTextAlignmentRight:
-    x -= size.w / 2;
-    break;
+  GCTX_GUARD {
+    const char *cstring = string->value;
+    int32_t font_index = COERCE_INT(_3);
+    int32_t x = COERCE_INT(_2);
+    int32_t y = COERCE_INT(_1);
+    GFont font = fonts_get_system_font(font_keys[font_index]);
+    GSize size = graphics_text_layout_get_content_size(
+        cstring, font, GRect(0, 0, 10000, 10000), GTextOverflowModeWordWrap,
+        GTextAlignmentLeft);
+    switch (context_alignment) {
+    case GTextAlignmentLeft:
+      break;
+    case GTextAlignmentCenter:
+      x -= size.w;
+      break;
+    case GTextAlignmentRight:
+      x -= size.w / 2;
+      break;
+    }
+    graphics_draw_text(context, cstring, font, GRect(x, y, 10000, 10000),
+                       GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
   }
-  graphics_draw_text(context, cstring, font, GRect(x, y, 10000, 10000),
-                     GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
   cleanup_val_str(state, string);
   cleanup_val(state, _3);
+  cleanup_val(state, _2);
+  cleanup_val(state, _1);
+}
+
+typedef struct {
+  GPoint *items;
+  int32_t count;
+  int32_t capacity;
+} PointList;
+
+typedef struct {
+  PointList points;
+  VmNum last_x;
+  VmNum last_y;
+} PathStackItem;
+
+static int32_t path_stack_index = -1;
+static PathStackItem path_stack[16];
+
+#define PATH_STACK_GUARD if (path_stack_index >= 0)
+
+#define DA_APPEND(m_list, m_element)                                           \
+  do {                                                                         \
+    if (m_list.count >= m_list.capacity) {                                     \
+      if (m_list.capacity == 0) {                                              \
+        m_list.capacity = 8;                                                   \
+      } else {                                                                 \
+        m_list.capacity *= 2;                                                  \
+      }                                                                        \
+      m_list.items =                                                           \
+          realloc(m_list.items, m_list.capacity * sizeof(*m_list.items));      \
+    }                                                                          \
+    m_list.items[m_list.count++] = (m_element);                                \
+  } while (false)
+
+PBL_BIND(graphics_bind_path_scope_begin) {
+  path_stack[++path_stack_index] = (PathStackItem){
+      .points = {},
+      .last_x = 0,
+      .last_y = 0,
+  };
+}
+
+PBL_BIND(graphics_bind_path_scope_end) {
+  VmValue _1 = POP();
+  int32_t mode = COERCE_INT(_1);
+  PathStackItem path = path_stack[path_stack_index--];
+  GCTX_GUARD {
+    if (path.points.count >= 2) {
+      GPath gpath = (GPath){
+          .num_points = path.points.count,
+          .points = path.points.items,
+      };
+      if (mode == 0) {
+        gpath_draw_filled(context, &gpath);
+      } else if (mode == 1) {
+        gpath_draw_outline(context, &gpath);
+      } else if (mode == 2) {
+        gpath_draw_outline_open(context, &gpath);
+      }
+    }
+  }
+  free(path.points.items);
+  cleanup_val(state, _1);
+}
+
+PBL_BIND(graphics_bind_path_move_to) {
+  VmValue _2 = POP();
+  VmValue _1 = POP();
+  VmNum x = COERCE_NUM(_1);
+  VmNum y = COERCE_NUM(_2);
+  PATH_STACK_GUARD {
+    PathStackItem *path = &path_stack[path_stack_index];
+    path->last_x = x;
+    path->last_y = y;
+    DA_APPEND(path->points,
+              GPoint(NUM_AS_INT(path->last_x), NUM_AS_INT(path->last_y)));
+  }
+  cleanup_val(state, _2);
+  cleanup_val(state, _1);
+}
+
+PBL_BIND(graphics_bind_path_move_by) {
+  VmValue _2 = POP();
+  VmValue _1 = POP();
+  VmNum x = COERCE_NUM(_1);
+  VmNum y = COERCE_NUM(_2);
+  PATH_STACK_GUARD {
+    PathStackItem *path = &path_stack[path_stack_index];
+    path->last_x += x;
+    path->last_y += y;
+    DA_APPEND(path->points,
+              GPoint(NUM_AS_INT(path->last_x), NUM_AS_INT(path->last_y)));
+  }
   cleanup_val(state, _2);
   cleanup_val(state, _1);
 }
@@ -317,3 +427,7 @@ PBL_BIND(sensors_current_watch_color) {
 #if __has_include("pebble_foreign_funcs_gen") && !defined(AST_DUMP)
 #include "pebble_foreign_funcs_gen"
 #endif
+
+void pebble_foreign_func_call_handler(VmState *state, int32_t call_id) {
+  handlers[call_id](state);
+}

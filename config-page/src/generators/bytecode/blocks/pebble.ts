@@ -101,6 +101,46 @@ const internal: Record<string, ForeignBlockCompiler | undefined> = {
       },
     ],
   },
+  graphics_bind_path_scope: {
+    generator: (compiler, block) => {
+      enum Modes {
+        FILLED,
+        OUTLINED,
+        OUTLINED_OPEN,
+      }
+      const mode = block.getFieldValue('MODE')
+      const contents = block.getInputTargetBlock('DO')
+      if (contents == null) {
+        return []
+      }
+      return [
+        ...ops.call(PebbleForeignFunc.GraphicsBindPathScopeBegin),
+        ...compiler.compile(contents),
+        ...ops.num(Modes[mode as keyof typeof Modes]),
+        ...ops.call(PebbleForeignFunc.GraphicsBindPathScopeEnd),
+      ]
+    },
+  },
+  graphics_bind_path_move_to: {
+    args: [
+      {
+        input: 'X',
+      },
+      {
+        input: 'Y',
+      },
+    ],
+  },
+  graphics_bind_path_move_by: {
+    args: [
+      {
+        input: 'X',
+      },
+      {
+        input: 'Y',
+      },
+    ],
+  },
   events_main: undefined,
   events_on_button_pressed: undefined,
   events_on_tapped: undefined,
