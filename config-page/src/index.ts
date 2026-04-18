@@ -67,14 +67,14 @@ if (body != null) {
 
 const urlParams = new URLSearchParams(window.location.search)
 const watchToken = urlParams.get('watchToken')
-const websocket = watchToken ? new WebSocket(`ws://192.168.1.219/from-page/${watchToken}`) : null
+const websocket = watchToken ? new WebSocket(`ws://192.168.1.219:8080/from-page/${watchToken}`) : null
 
 function recompile() {
   const blocks = ws.getAllBlocks()
   if (blocks.length == 0) {
     return
   }
-  output.innerText = ''
+  output.innerText = `Websocket status: ${websocket?.readyState}`
   for (const block of blocks) {
     if (block.getParent() != null) continue
     const compiler = new bytecode.Compiler(ws)

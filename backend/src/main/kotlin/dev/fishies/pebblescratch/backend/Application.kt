@@ -26,6 +26,7 @@ fun Application.module() {
 
         webSocket("/from-page/{id}") {
             val id = call.parameters["id"] ?: error("ID must be provided")
+            log.info("Opening websocket from page for $id")
             for (frame in incoming) {
                 websocketForwarder.emit(id to frame)
             }
@@ -33,6 +34,7 @@ fun Application.module() {
 
         webSocket("/to-phone/{id}") {
             val id = call.parameters["id"] ?: error("ID must be provided")
+            log.info("Opening websocket to phone for $id")
             websocketForwarder.mapNotNull { (frameId, frame) -> frame.takeIf { frameId == id } }.collect(::send)
         }
     }
