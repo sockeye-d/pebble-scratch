@@ -82,7 +82,11 @@ function recompile() {
     const disassembly = bytecode.disassemble(code)
     output.innerText += `${disassembly}\n---\n`
   }
-  websocket?.send(output.innerText)
+  if (websocket?.readyState === WebSocket.OPEN) {
+    websocket?.send(output.innerText)
+  } else {
+    console.log('Websocket not ready yet :(')
+  }
 }
 
 if (ws) {
