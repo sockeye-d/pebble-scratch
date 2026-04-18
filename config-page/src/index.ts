@@ -74,7 +74,7 @@ function recompile() {
   if (blocks.length == 0) {
     return
   }
-  output.innerText = `Websocket: ${websocket} status: ${websocket?.readyState}\nwatch token: ${watchToken}`
+  output.innerText = `Websocket: ${websocket} status: ${websocket?.readyState}\nwatch token: ${watchToken}\nparams are ${window.location.search}\nfull location is ${window.location}\n`
   for (const block of blocks) {
     if (block.getParent() != null) continue
     const compiler = new bytecode.Compiler(ws)
