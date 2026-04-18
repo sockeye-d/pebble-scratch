@@ -66,7 +66,7 @@ if (body != null) {
 }
 
 const urlParams = new URLSearchParams(window.location.search)
-const watchToken = urlParams.get('watchToken')
+const watchToken = urlParams.get('token')
 const websocket = watchToken ? new WebSocket(`ws://192.168.1.219:8080/from-page/${watchToken}`) : null
 
 function recompile() {
