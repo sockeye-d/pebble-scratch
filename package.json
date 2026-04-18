@@ -10,6 +10,9 @@
     "configurable"
   ],
   "pebble": {
+    "capabilities": [
+      "configurable"
+    ],
     "displayName": "pebble-scratch",
     "uuid": "10a36fc4-36ae-4bd2-9b0e-c8bf5de20b01",
     "sdkVersion": "3",

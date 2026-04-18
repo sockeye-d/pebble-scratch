@@ -66,6 +66,9 @@ typedef enum {
   OP_TRUE,
   OP_FALS,
   OP_SUS,
+  OP_CALL,
+  OP_RET,
+  OP_RETV,
   OP_EOF,
 } VmOp;
 
@@ -78,6 +81,7 @@ typedef enum {
 } VmType;
 
 #define MAX_STACK 256
+#define MAX_CALL_STACK 32
 #define MAX_VARS 256
 
 typedef struct {
@@ -158,12 +162,19 @@ typedef struct VmState VmState;
 
 typedef VmStepResult (*VmCallHandler)(VmState *state, int32_t call_id);
 
+typedef struct {
+  uint32_t last_stack_size;
+  uint32_t return_pc;
+} Call;
+
 struct VmState {
   VmCallHandler call_handler;
   uint32_t pc;
   uint32_t stack_ptr;
   VmValue *vars;
   VmValue stack[MAX_STACK];
+  uint8_t call_stack_ptr;
+  Call call_stack[MAX_CALL_STACK];
   VmInstruction *instructions;
 };
 

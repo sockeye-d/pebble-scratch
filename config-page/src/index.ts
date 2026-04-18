@@ -28,14 +28,30 @@ const theme = Blockly.Theme.defineTheme('theme', {
   },
 })
 
-// Set up UI elements and inject Blockly
 const blocklyDiv = document.getElementById('blocklyDiv')!
 const output = document.getElementById('generatedCode')!
 
+class CompactZelosConstants extends Blockly.zelos.ConstantProvider {
+  constructor() {
+    super(3)
+  }
+}
+
+class CompactZelosRenderer extends Blockly.zelos.Renderer {
+  makeConstants_() {
+    return new CompactZelosConstants()
+  }
+}
+
+Blockly.blockRendering.register('compact_zelos', CompactZelosRenderer)
+
 const ws = Blockly.inject(blocklyDiv, {
   toolbox: { kind: 'categoryToolbox', contents: [] },
-  renderer: 'zelos',
+  renderer: 'compact_zelos',
   theme: theme,
+  zoom: {
+    controls: true,
+  },
 })
 
 ws.updateToolbox(toolbox(ws))
@@ -47,16 +63,24 @@ if (body != null) {
   body.style.setProperty('--text-color', theme.getComponentStyle('toolboxForegroundColour'))
 }
 
+const urlParams = new URLSearchParams(window.location.search)
+const watchToken = urlParams.get('watchToken')
+const websocket = new WebSocket(`ws://192.168.1.219/from-page/${watchToken}`)
+
 function recompile() {
   const blocks = ws.getAllBlocks()
   if (blocks.length == 0) {
     return
   }
-  const block = blocks[0]
-  const compiler = new bytecode.Compiler(ws)
-  const code = compiler.compile(block)
-  const disassembly = bytecode.disassemble(code)
-  output.innerText = disassembly
+  output.innerText = ''
+  for (const block of blocks) {
+    if (block.getParent() != null) continue
+    const compiler = new bytecode.Compiler(ws)
+    const code = compiler.compile(block)
+    const disassembly = bytecode.disassemble(code)
+    output.innerText += `${disassembly}\n---\n`
+  }
+  websocket.send(output.innerText)
 }
 
 if (ws) {
@@ -118,6 +142,7 @@ if (ws) {
       return
     }
     layers.layers.push({ name: result })
+    ws.getToolbox()?.refreshSelection()
   })
 
   ws.registerButtonCallback('DELETE_LAYER', (p) => {
@@ -125,6 +150,7 @@ if (ws) {
     if (confirm(`Delete layer '${name}'?`)) {
       const index = layers.layers.findIndex((e) => e.name == name)
       layers.layers.splice(index, 1)
+      ws.getToolbox()?.refreshSelection()
     }
   })
 }

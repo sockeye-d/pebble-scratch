@@ -660,7 +660,7 @@ VmStepResult vm_step(VmState *state) {
     cleanup_val_str(state, str);
   } break;
   case OP_CALL_FOREIGN: {
-    size_t call_id = READ_INSTRUCTION().var;
+    uint32_t call_id = READ_INSTRUCTION().var;
     VmCallHandler handler = state->call_handler;
     if (handler != NULL) {
       return handler(state, call_id);
@@ -680,6 +680,31 @@ VmStepResult vm_step(VmState *state) {
   } break;
   case OP_SUS:
     return STEP_RESULT_SUSPEND;
+  case OP_CALL: {
+    uint32_t loc = READ_INSTRUCTION().var;
+    Call call = (Call){
+        .last_stack_size = state->stack_ptr,
+        .return_pc = state->pc,
+    };
+    state->pc = loc;
+    state->call_stack[state->call_stack_ptr++] = call;
+  } break;
+  case OP_RET: {
+    Call call = state->call_stack[state->call_stack_ptr--];
+    while (state->stack_ptr > call.last_stack_size) {
+      cleanup_val(state, POP());
+    }
+    state->pc = call.return_pc;
+  } break;
+  case OP_RETV: {
+    Call call = state->call_stack[state->call_stack_ptr--];
+    VmValue v = POP();
+    while (state->stack_ptr > call.last_stack_size) {
+      cleanup_val(state, POP());
+    }
+    PUSH() = v;
+    state->pc = call.return_pc;
+  } break;
   case OP_EOF:
     return STEP_RESULT_DONE;
   }
@@ -823,6 +848,12 @@ const char *print_instruction(VmInstruction instruction) {
     return "OP_FALS";
   case OP_SUS:
     return "OP_SUS";
+  case OP_CALL:
+    return "OP_CALL";
+  case OP_RET:
+    return "OP_RET";
+  case OP_RETV:
+    return "OP_RETV";
   case OP_EOF:
     return "OP_EOF";
   }

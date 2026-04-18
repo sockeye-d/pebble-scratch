@@ -52,5 +52,8 @@ export enum VmOp {
   True,
   Fals,
   Sus,
+  Call,
+  Ret,
+  Retv,
   Eof,
 }

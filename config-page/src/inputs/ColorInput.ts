@@ -172,7 +172,7 @@ export class ColorField extends Field<string> {
 
   protected override updateSize_(_margin?: number): void {
     this.size_.width = 32
-    this.size_.height = 32
+    this.size_.height = 16
   }
 
   override initView() {
@@ -207,14 +207,15 @@ export class ColorField extends Field<string> {
     // this.borderRect_.style.fill = this.color.toRgba()
     // this.borderRect_.setAttribute('width', '32')
     const leftRect = blockly.utils.dom.createSvgElement(blockly.utils.Svg.PATH, {
-      d: 'M16 0v32h-12a4 4 0 0 1-4-4v-24a4 4 0 0 1 4-4z',
+      d: 'M16 16v16h-12a4 4 0 0 1-4-4v-8a4 4 0 0 1 4-4',
+      transform: 'translate(0 -16)',
     })
     const rightRect = blockly.utils.dom.createSvgElement(blockly.utils.Svg.PATH, {
-      d: 'M16 0v32h-12a4 4 0 0 1-4-4v-24a4 4 0 0 1 4-4z',
-      transform: 'rotate(180 16 16)',
+      d: 'M16 16v16h-12a4 4 0 0 1-4-4v-8a4 4 0 0 1 4-4',
+      transform: 'rotate(180 16 8) translate(0 -16)',
     })
     checkerboard.setAttribute('width', '32')
-    checkerboard.setAttribute('height', '32')
+    checkerboard.setAttribute('height', '16')
     checkerboard.setAttribute('rx', '4')
     checkerboard.setAttribute('ry', '4')
     this.fieldGroup_?.appendChild(checkerboard)

@@ -13,6 +13,7 @@ export type VmInstruction =
   | { type: 'var'; var: VarRef }
   | { type: 'str'; chars: [number, number, number, number] }
   | { type: 'fun'; fun: number }
+  | { type: 'call'; procName: string }
 
 export type VarID = string
 export type VarRef = number
@@ -98,6 +99,8 @@ export function disassemble(instructions: VmInstruction[]): string {
           return `Nil ${e.info}`
         case 'fun':
           return `- ${PebbleForeignFunc[e.fun]}`
+        case 'call':
+          return `Call ${e.procName}`
       }
     })
     .join('\n')

@@ -48,6 +48,11 @@ code {
   flex: 1 1 400px;
 }
 
+#generatedCode {
+  height: 100%;
+  margin: 0;
+}
+
 .blocklyMainBackground {
   stroke: none;
 }

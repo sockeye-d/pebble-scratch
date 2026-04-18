@@ -34,7 +34,9 @@ VmState *init_vm(VmInstruction *instructions) {
   state->vars = vars;
   state->pc = 0;
   state->stack_ptr = 0;
+  state->call_stack_ptr = 0;
   tick_vm((void *)state);
+  return state;
 }
 
 static void prv_select_click_handler(ClickRecognizerRef recognizer,
