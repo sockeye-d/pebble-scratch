@@ -32,7 +32,7 @@ export const load = function (workspace: Blockly.Workspace) {
     Blockly.serialization.workspaces.load(JSON.parse(data), workspace, undefined)
   } catch (e) {
     if (confirm('Something went wrong. Clear local storage?')) {
-      localStorage.clear()
+      window.localStorage.removeItem(storageKey)
     }
   } finally {
     Blockly.Events.enable()

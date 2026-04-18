@@ -56,6 +56,8 @@ const ws = Blockly.inject(blocklyDiv, {
 
 ws.updateToolbox(toolbox(ws))
 
+ws.getAllBlocks().forEach((e) => e.dispose(false, false))
+
 const body = document.querySelector('body')
 
 if (body != null) {
@@ -65,7 +67,7 @@ if (body != null) {
 
 const urlParams = new URLSearchParams(window.location.search)
 const watchToken = urlParams.get('watchToken')
-const websocket = new WebSocket(`ws://192.168.1.219/from-page/${watchToken}`)
+const websocket = watchToken ? new WebSocket(`ws://192.168.1.219/from-page/${watchToken}`) : null
 
 function recompile() {
   const blocks = ws.getAllBlocks()
@@ -80,7 +82,7 @@ function recompile() {
     const disassembly = bytecode.disassemble(code)
     output.innerText += `${disassembly}\n---\n`
   }
-  websocket.send(output.innerText)
+  websocket?.send(output.innerText)
 }
 
 if (ws) {

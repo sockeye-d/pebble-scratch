@@ -6,14 +6,8 @@ console.log('MAKING TOOLBOX')
 
 function makeDefaultBlock(workspace: blockly.Workspace, blockName: string): BlockInfo {
   const block = workspace.newBlock(blockName)
-  if (block === undefined) {
-    return {
-      kind: 'block',
-      type: blockName,
-    }
-  }
   const inputs = makeNumberInputs({}, ...block.inputList.map((e) => e.name))
-  workspace.removeBlockById(block.id)
+  // block.disposeInternal()
 
   return {
     kind: 'block',
