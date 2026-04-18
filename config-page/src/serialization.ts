@@ -28,6 +28,13 @@ export const load = function (workspace: Blockly.Workspace) {
 
   // Don't emit events during loading.
   Blockly.Events.disable()
-  Blockly.serialization.workspaces.load(JSON.parse(data), workspace, undefined)
-  Blockly.Events.enable()
+  try {
+    Blockly.serialization.workspaces.load(JSON.parse(data), workspace, undefined)
+  } catch (e) {
+    if (confirm('Something went wrong. Clear local storage?')) {
+      localStorage.clear()
+    }
+  } finally {
+    Blockly.Events.enable()
+  }
 }
