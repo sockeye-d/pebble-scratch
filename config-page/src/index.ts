@@ -7,6 +7,7 @@ import './index.css'
 import DarkTheme from '@blockly/theme-dark'
 import * as bytecode from './generators/bytecode'
 import { ColorField } from './inputs/ColorInput'
+import { compileAllBlocks } from './compiler'
 
 Blockly.fieldRegistry.register('field_color', ColorField)
 Blockly.common.defineBlocks(core.blocks)
@@ -27,6 +28,7 @@ const theme = Blockly.Theme.defineTheme('theme', {
 
 const blocklyDiv = document.getElementById('blocklyDiv')!
 const output = document.getElementById('generatedCode')!
+const bigGreenButton = document.getElementById('runButton')!
 
 class CompactZelosConstants extends Blockly.zelos.ConstantProvider {
   constructor() {
@@ -62,10 +64,6 @@ if (body != null) {
   body.style.setProperty('--text-color', theme.getComponentStyle('toolboxForegroundColour'))
 }
 
-// const urlParams = new URLSearchParams(window.location.search)
-// const watchToken = urlParams.get('token')
-// const websocket = watchToken ? new WebSocket(`wss://192.168.1.219:8080/from-page/${watchToken}`) : null
-
 function recompile() {
   const blocks = ws.getAllBlocks()
   if (blocks.length == 0) {
@@ -74,14 +72,43 @@ function recompile() {
   output.innerText = ''
   const compiler = new bytecode.Compiler(ws)
   for (const block of blocks) {
-    bytecode.disassembleToHtml(ws, output, compiler.compile(block))
-    const divider = document.createTextNode('---')
+    if (block.getParent() !== null) {
+      continue
+    }
+    const compilationResult = compiler.compile(block)
+    if (compilationResult.length === 1 && compilationResult[0].type === 'nil') {
+      const attempt2 = compiler.compileNull(block.getInputTargetBlock('DO'))
+      bytecode.disassembleToHtml(ws, output, attempt2)
+    } else {
+      bytecode.disassembleToHtml(ws, output, compilationResult)
+    }
+    const divider = document.createElement('div')
+    divider.style = 'height: 1px; background-color: var(--text-color); margin: 1rem 0 1rem 0; opacity: 0.5;'
     output.appendChild(divider)
   }
 }
 
+bigGreenButton.onclick = () => {
+  const compiler = new bytecode.Compiler(ws)
+  const compilationResult = compileAllBlocks(ws, compiler)
+  const workspaceData = save(ws)
+  let string = ''
+  for (const e of new Uint8Array(compilationResult.bytecode.buffer)) {
+    string += String.fromCharCode(e)
+  }
+  const data = {
+    ws: workspaceData,
+    bytecode: btoa(string),
+    handlers: compilationResult.handlers,
+  }
+  console.log(data)
+  location.href = `pebblejs://close#${encodeURIComponent(JSON.stringify(data))}`
+}
+
 if (ws) {
-  load(ws)
+  const urlParams = new URLSearchParams(window.location.search)
+  const workspaceString = urlParams.get('workspace')
+  load(ws, workspaceString)
 
   recompile()
 

@@ -25,21 +25,7 @@ function throwError(message?: string): never {
 
 export function compileAllBlocks(ws: Workspace, compiler: Compiler) {
   const functionMap: Record<string, number> = {}
-  const handlers: Record<EventType, number[]> = {
-    [EventType.Main]: [],
-    [EventType.BtnBack]: [],
-    [EventType.BtnTop]: [],
-    [EventType.BtnMiddle]: [],
-    [EventType.BtnBottom]: [],
-    [EventType.Tapped]: [],
-    [EventType.TimeSecond]: [],
-    [EventType.TimeMinute]: [],
-    [EventType.TimeHour]: [],
-    [EventType.TimeDay]: [],
-    [EventType.TimeMonth]: [],
-    [EventType.TimeYear]: [],
-    [EventType.LayerRedraw]: [],
-  }
+  const handlers: Record<number, number[]> = {}
   const bits = <Uint32Array[]>[]
   const functionBytecode: Record<string, VmInstruction[]> = {}
   let bitsLength = 0
@@ -64,8 +50,12 @@ export function compileAllBlocks(ws: Workspace, compiler: Compiler) {
       if (input === null) {
         continue
       }
-      const bytecode = [...compiler.compile(input), ...ops.op(VmOp.Nop)]
-      handlers[typeof eventType === 'function' ? eventType(input) : eventType].push(bitsLength)
+      const bytecode = [...compiler.compile(input), ...ops.op(VmOp.Eof)]
+      const type = typeof eventType === 'function' ? eventType(input) : eventType
+      if (!(type in handlers)) {
+        handlers[type] = []
+      }
+      handlers[type].push(bitsLength)
       bits.push(bytecodeToBinary(bytecode))
       bitsLength += bytecode.length
     }

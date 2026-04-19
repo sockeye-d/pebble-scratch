@@ -169,13 +169,6 @@ export function disassembleToHtml(ws: blockly.WorkspaceSvg, parent: Element, ins
       div.onmouseleave = () => {
         ws.highlightBlock(null)
       }
-      // const btn = document.createElement('button')
-      // btn.innerText = '🔍'
-      // btn.style = 'flex: 0 0;'
-      // btn.onclick = () => {
-      //   ws.highlightBlock(sourceBlock.id)
-      // }
-      // div.appendChild(btn)
     }
     parent.appendChild(div)
   }
