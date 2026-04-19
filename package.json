@@ -24,7 +24,9 @@
       "watchface": false
     },
     "messageKeys": [
-      "Bytecode[256]"
+      "Ack",
+      "Bytecode",
+      "Handlers"
     ],
     "resources": {
       "media": []

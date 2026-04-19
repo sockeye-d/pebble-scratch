@@ -25,4 +25,5 @@ export enum PebbleForeignFunc {
   TimeTime,
   SensorsCurrentWatchModel,
   SensorsCurrentWatchColor,
+  SensorsPrint,
 }

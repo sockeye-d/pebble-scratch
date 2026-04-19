@@ -1,3 +1,4 @@
+#include "message_keys.auto.h"
 #include "pebble_foreign_funcs.h"
 #include "vm.h"
 #include <pebble.h>
@@ -54,6 +55,14 @@ VmStepResult controls_wait(VmState *state) {
   return STEP_RESULT_PAUSE;
 }
 
+VmStepResult sensors_print(VmState *state) {
+  VmValue _1 = POP();
+  VmString *string = COERCE_STR(_1);
+  app_log(APP_LOG_LEVEL_INFO, "pebble-scratch-logging", 0, "%s", string->value);
+  cleanup_val_str(state, string);
+  return STEP_RESULT_CONTINUE;
+}
+
 VmState *init_vm(VmInstruction *instructions) {
   VmState *state = malloc(sizeof(VmState));
   state->instructions = instructions;
@@ -100,8 +109,23 @@ static void prv_window_unload(Window *window) {
   text_layer_destroy(s_text_layer);
 }
 
+static void inbox_received_handler(DictionaryIterator *iter, void *ctx) {
+  printf("Inbox received");
+  Tuple *bytecode_tuple = dict_find(iter, MESSAGE_KEY_Bytecode);
+  if (bytecode_tuple) {
+    // This value was stored as JS Number, which is stored here as int32_t
+    uint8_t *bytecode = bytecode_tuple->value->data;
+    printf("length: [%d]", bytecode_tuple->length);
+    for (int16_t i = 0; i < bytecode_tuple->length; i++) {
+      printf("%d", bytecode[i]);
+    }
+  }
+}
+
 static void prv_init(void) {
   s_window = window_create();
+  app_message_open(256, 8);
+  app_message_register_inbox_received(inbox_received_handler);
   window_set_click_config_provider(s_window, prv_click_config_provider);
   window_set_window_handlers(s_window, (WindowHandlers){
                                            .load = prv_window_load,

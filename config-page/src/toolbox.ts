@@ -410,6 +410,20 @@ export const toolbox = (workspace: blockly.Workspace): ToolboxDefinition => {
               COLOR: 'WATCH_INFO_COLOR_TIME_STEEL_GOLD',
             },
           },
+          {
+            kind: 'block',
+            type: 'sensors_print',
+            inputs: {
+              MESSAGE: {
+                shadow: {
+                  type: 'text',
+                  fields: {
+                    TEXT: 'Hello, Pebble!',
+                  },
+                },
+              },
+            },
+          },
         ],
       },
       {

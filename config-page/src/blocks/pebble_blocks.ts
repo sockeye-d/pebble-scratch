@@ -263,6 +263,21 @@ const sensors_watch_color = {
   colour: 280,
 }
 
+const sensors_print = {
+  type: 'sensors_print',
+  message0: 'print %1',
+  args0: [
+    {
+      type: 'input_value',
+      name: 'MESSAGE',
+    },
+  ],
+  inputsInline: true,
+  previousStatement: null,
+  nextStatement: null,
+  colour: 280,
+}
+
 const graphics_color = {
   type: 'graphics_color',
   message0: '%1',
@@ -681,6 +696,7 @@ export const blocks = Blockly.common.createBlockDefinitionsFromJsonArray([
   sensors_watch_model,
   sensors_current_watch_color,
   sensors_watch_color,
+  sensors_print,
 
   graphics_color,
   graphics_bind_set_fill_color,

@@ -444,6 +444,7 @@ PBL_BIND(sensors_current_watch_color) {
   };
   return STEP_RESULT_CONTINUE;
 }
+PBL_BIND(sensors_print);
 
 #if __has_include("pebble_foreign_funcs_gen") && !defined(AST_DUMP)
 #include "pebble_foreign_funcs_gen"

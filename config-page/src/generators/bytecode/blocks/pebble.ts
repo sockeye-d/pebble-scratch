@@ -219,6 +219,7 @@ const internal: Record<string, ForeignBlockCompiler | undefined> = {
       return ops.num(model)
     },
   },
+  sensors_print: { args: [{ input: 'MESSAGE' }] },
   time_wall_time: {},
   time_time_24h: {},
   time_time: {
