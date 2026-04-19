@@ -7,7 +7,7 @@ const events_main = {
     { type: 'input_dummy' },
     {
       type: 'input_statement',
-      name: 'CONTENT',
+      name: 'DO',
     },
   ],
   colour: 30,
@@ -22,7 +22,7 @@ const events_on_button_pressed = {
       type: 'field_dropdown',
       name: 'BUTTON',
       options: [
-        ['back', 'BACK'],
+        // ['back', 'BACK'],
         ['top', 'TOP'],
         ['middle', 'MIDDLE'],
         ['bottom', 'BOTTOM'],
@@ -30,7 +30,7 @@ const events_on_button_pressed = {
     },
     {
       type: 'input_statement',
-      name: 'CONTENT',
+      name: 'DO',
     },
   ],
   colour: 30,
@@ -43,7 +43,7 @@ const events_on_tapped = {
     { type: 'input_dummy' },
     {
       type: 'input_statement',
-      name: 'CONTENT',
+      name: 'DO',
     },
   ],
   colour: 30,
@@ -55,6 +55,7 @@ const events_on_time_change = {
   args0: [
     {
       type: 'field_dropdown',
+      name: 'UNIT',
       options: [
         ['second', 'SECOND'],
         ['minute', 'MINUTE'],
@@ -67,7 +68,7 @@ const events_on_time_change = {
     { type: 'input_dummy' },
     {
       type: 'input_statement',
-      name: 'CONTENT',
+      name: 'DO',
     },
   ],
   colour: 30,
@@ -317,6 +318,19 @@ const graphics_bind_set_stroke_width = {
   inputsInline: true,
   previousStatement: null,
   nextStatement: null,
+  colour: 80,
+}
+
+const graphics_bind_on_draw = {
+  type: 'graphics_bind_on_draw',
+  message0: 'on redraw %1 %2',
+  args0: [
+    { type: 'input_dummy' },
+    {
+      type: 'input_statement',
+      name: 'DO',
+    },
+  ],
   colour: 80,
 }
 
@@ -672,6 +686,7 @@ export const blocks = Blockly.common.createBlockDefinitionsFromJsonArray([
   graphics_bind_set_fill_color,
   graphics_bind_set_stroke_color,
   graphics_bind_set_stroke_width,
+  graphics_bind_on_draw,
   graphics_bind_draw_arc,
   graphics_bind_fill_arc,
   graphics_bind_draw_circle,

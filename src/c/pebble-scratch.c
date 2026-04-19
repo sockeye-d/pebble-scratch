@@ -18,12 +18,19 @@ typedef enum {
   EVENT_TIME_DAY,
   EVENT_TIME_MONTH,
   EVENT_TIME_YEAR,
+  EVENT_LAYER_REDRAW,
 } EventType;
+
+Layer *layers;
 
 typedef struct {
   EventType type;
   int32_t pc;
 } Handler;
+
+typedef struct {
+
+} BlockStack;
 
 VmValue vars[256];
 

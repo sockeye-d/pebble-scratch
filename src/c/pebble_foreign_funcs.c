@@ -273,20 +273,6 @@ static PathStackItem path_stack[16];
 
 #define PATH_STACK_GUARD if (path_stack_index >= 0)
 
-#define DA_APPEND(m_list, m_element)                                           \
-  do {                                                                         \
-    if (m_list.count >= m_list.capacity) {                                     \
-      if (m_list.capacity == 0) {                                              \
-        m_list.capacity = 8;                                                   \
-      } else {                                                                 \
-        m_list.capacity *= 2;                                                  \
-      }                                                                        \
-      m_list.items =                                                           \
-          realloc(m_list.items, m_list.capacity * sizeof(*m_list.items));      \
-    }                                                                          \
-    m_list.items[m_list.count++] = (m_element);                                \
-  } while (false)
-
 PBL_BIND(graphics_bind_path_scope_begin) {
   path_stack[++path_stack_index] = (PathStackItem){
       .points = {},

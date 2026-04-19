@@ -135,6 +135,20 @@ typedef struct {
     }                                                                          \
   } while (false)
 
+#define DA_APPEND(m_list, m_element)                                           \
+  do {                                                                         \
+    if (m_list.count >= m_list.capacity) {                                     \
+      if (m_list.capacity == 0) {                                              \
+        m_list.capacity = 8;                                                   \
+      } else {                                                                 \
+        m_list.capacity *= 2;                                                  \
+      }                                                                        \
+      m_list.items =                                                           \
+          realloc(m_list.items, m_list.capacity * sizeof(*m_list.items));      \
+    }                                                                          \
+    m_list.items[m_list.count++] = (m_element);                                \
+  } while (false)
+
 /**
  * Fixed-point number with a ratio of 1/256
  */

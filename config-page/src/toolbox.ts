@@ -458,6 +458,10 @@ export const toolbox = (workspace: blockly.Workspace): ToolboxDefinition => {
             },
           },
           {
+            kind: 'block',
+            type: 'graphics_bind_on_draw',
+          },
+          {
             kind: 'label',
             text: 'Primitives',
           },
@@ -514,12 +518,6 @@ export const toolbox = (workspace: blockly.Workspace): ToolboxDefinition => {
         name: 'Variables',
         categorystyle: 'variable_category',
         custom: 'VARIABLE',
-      },
-      {
-        kind: 'category',
-        name: 'Layers',
-        categorystyle: 'layers_category',
-        custom: 'LAYER',
       },
       {
         kind: 'category',
