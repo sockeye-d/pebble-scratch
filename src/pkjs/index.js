@@ -11,7 +11,7 @@ Pebble.addEventListener('showConfiguration', () => {
   // Pebble.openURL(`https://localhost:8080/`)
 })
 
-pebble.addEventListener('webviewclosed', (e) => {
+Pebble.addEventListener('webviewclosed', (e) => {
   const response = e.response
   console.log(response)
 })

@@ -38,7 +38,7 @@ export function compileAllBlocks(ws: Workspace, compiler: Compiler) {
   }
   const bytecodeToBinary = (e: VmInstruction[]) => generateBinaryBytecode(e, (name) => functionMap[name])
   bits.push(...Object.entries(functionBytecode).map(([_, e]) => bytecodeToBinary(e)))
-  const finalBits = new Uint32Array(bits.map((e) => e.length).reduce((a, b) => a + b))
+  const finalBits = new Uint32Array(bits.map((e) => e.length).reduce((a, b) => a + b, 0))
   let currentOffset = 0
   for (const bit of bits) {
     finalBits.set(bit, currentOffset)
