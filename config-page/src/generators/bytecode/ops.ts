@@ -76,6 +76,6 @@ export function str(text: string) {
   return [...op(VmOp.Str), ...result]
 }
 
-export function call(fun: PebbleForeignFunc) {
+export function callForeign(fun: PebbleForeignFunc) {
   return [...op(VmOp.CallForeign), <VmInstruction>{ type: 'fun', fun }]
 }

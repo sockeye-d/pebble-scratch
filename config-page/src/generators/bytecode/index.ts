@@ -71,12 +71,20 @@ export class Compiler {
     return instructions
   }
 
+  public compileNull(block: blockly.Block | null, defaultInstructions = <VmInstruction[]>[]): VmInstruction[] {
+    return block === null ? defaultInstructions : this.compile(block)
+  }
+
   public atomically<T>(callback: () => T) {
     this.useAtomic++
     const v = callback()
     this.useAtomic--
     return v
   }
+}
+
+function unreachable(x: never): never {
+  throw new Error()
 }
 
 export function disassemble(instructions: VmInstruction[]): string {
@@ -100,8 +108,68 @@ export function disassemble(instructions: VmInstruction[]): string {
         case 'fun':
           return `- ${PebbleForeignFunc[e.fun]}`
         case 'call':
-          return `Call ${e.procName}`
+          return `- proc '${e.procName}'`
       }
+      unreachable(e)
     })
     .join('\n')
+}
+
+const vmMaxRepresentableNum = 2 ** (31 - 8)
+
+export function generateBinaryBytecode(instructions: VmInstruction[], resolveCallLocation: (func: string) => number) {
+  const r = new Uint32Array(instructions.length)
+  for (const [index, instruction] of instructions.entries()) {
+    switch (instruction.type) {
+      case 'op':
+        {
+          r[index] = instruction.op
+        }
+        break
+      case 'str':
+        {
+          const chars = instruction.chars.slice()
+          chars.reverse()
+          const packed = chars.reduce((a, e) => (a << 8) | e, 0)
+          r[index] = packed
+        }
+        break
+      case 'var':
+        {
+          r[index] = instruction.var
+        }
+        break
+      case 'num':
+        {
+          let num = instruction.num
+          if (Math.abs(num) > vmMaxRepresentableNum) {
+            num = 0
+          }
+          r[index] = (num * 256) | 0
+        }
+        break
+      case 'raw':
+        {
+          r[index] = instruction.num | 0
+        }
+        break
+      case 'nil':
+        r[index] = VmOp.Nop
+        break
+      case 'fun':
+        {
+          r[index] = instruction.fun | 0
+        }
+        break
+      case 'call':
+        {
+          // Resolve function name, then insert raw location constant (CALL has already been set up by previous instruction)
+          r[index] = resolveCallLocation(instruction.procName)
+        }
+        break
+      default:
+        unreachable(instruction)
+    }
+  }
+  return r
 }

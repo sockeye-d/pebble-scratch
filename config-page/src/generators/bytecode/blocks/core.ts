@@ -188,4 +188,44 @@ export const compilers: Record<string, BlockCompiler> = {
     const ref = compiler.variableRefFor(varID)
     return [...compiler.compile(value), ...ops.stor(ref)]
   },
+
+  procedures_defnoreturn: (compiler, block) => {
+    return [...compiler.compileNull(block.getInputTargetBlock('STACK')), ...ops.op(VmOp.Ret)]
+  },
+  procedures_defreturn: (compiler, block) => {
+    const returnBlock = block.getInputTargetBlock('RETURN')
+    return [
+      ...compiler.compileNull(block.getInputTargetBlock('STACK')),
+      ...(returnBlock === null ? ops.num(0) : compiler.compile(returnBlock)),
+      ...ops.op(VmOp.Retv),
+    ]
+  },
+  procedures_ifreturn: (compiler, block) => {
+    const conditionBlock = block.getInputTargetBlock('CONDITION')
+    if (conditionBlock === null) {
+      return []
+    }
+    const returnBlock = block.getInputTargetBlock('VALUE')
+    const innerBytecode = compiler.compile(conditionBlock)
+    const ret = [...compiler.compileNull(returnBlock, ops.num(0)), ...ops.op(VmOp.Retv)]
+    return [...innerBytecode, ...ops.jmp(ret.length, 'onFalse'), ...ret]
+  },
+  procedures_callnoreturn: (compiler, block) => {
+    const bytecode = <VmInstruction[]>[]
+    const name = block.getFieldValue(`NAME`)
+    for (let i = 0; ; i++) {
+      const input = block.getInputTargetBlock(`ARG${i}`)
+      const varName: string | null = block.getFieldValue(`ARGNAME${i}`)
+      if (varName === null) {
+        break
+      }
+      const varRef = compiler.variableRefFor(varName)
+      const inputBytecode = [...compiler.compileNull(input, ops.num(0)), ...ops.stor(varRef)]
+      bytecode.push(...inputBytecode)
+    }
+    bytecode.push(...ops.op(VmOp.Call))
+    bytecode.push({ type: 'call', procName: name })
+    ;(window as any).block = block
+    return bytecode
+  },
 }

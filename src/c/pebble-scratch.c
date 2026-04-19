@@ -5,6 +5,26 @@
 static Window *s_window;
 static TextLayer *s_text_layer;
 
+typedef enum {
+  EVENT_MAIN,
+  EVENT_BTN_BACK,
+  EVENT_BTN_TOP,
+  EVENT_BTN_MIDDLE,
+  EVENT_BTN_BOTTOM,
+  EVENT_TAPPED,
+  EVENT_TIME_SECOND,
+  EVENT_TIME_MINUTE,
+  EVENT_TIME_HOUR,
+  EVENT_TIME_DAY,
+  EVENT_TIME_MONTH,
+  EVENT_TIME_YEAR,
+} EventType;
+
+typedef struct {
+  EventType type;
+  int32_t pc;
+} Handler;
+
 VmValue vars[256];
 
 static void tick_vm(void *data) {

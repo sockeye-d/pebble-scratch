@@ -114,10 +114,10 @@ const internal: Record<string, ForeignBlockCompiler | undefined> = {
         return []
       }
       return [
-        ...ops.call(PebbleForeignFunc.GraphicsBindPathScopeBegin),
+        ...ops.callForeign(PebbleForeignFunc.GraphicsBindPathScopeBegin),
         ...compiler.compile(contents),
         ...ops.num(Modes[mode as keyof typeof Modes]),
-        ...ops.call(PebbleForeignFunc.GraphicsBindPathScopeEnd),
+        ...ops.callForeign(PebbleForeignFunc.GraphicsBindPathScopeEnd),
       ]
     },
   },
@@ -270,7 +270,7 @@ export const compilers = (() => {
             ]
         }
         if (fn !== null) {
-          bytecode.push(...ops.call(fn))
+          bytecode.push(...ops.callForeign(fn))
         }
         return bytecode
       })

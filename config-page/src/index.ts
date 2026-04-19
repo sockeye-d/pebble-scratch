@@ -65,28 +65,26 @@ if (body != null) {
   body.style.setProperty('--text-color', theme.getComponentStyle('toolboxForegroundColour'))
 }
 
-const urlParams = new URLSearchParams(window.location.search)
-const watchToken = urlParams.get('token')
-const websocket = watchToken ? new WebSocket(`ws://192.168.1.219:8080/from-page/${watchToken}`) : null
+console.log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+
+// const urlParams = new URLSearchParams(window.location.search)
+// const watchToken = urlParams.get('token')
+// const websocket = watchToken ? new WebSocket(`wss://192.168.1.219:8080/from-page/${watchToken}`) : null
 
 function recompile() {
   const blocks = ws.getAllBlocks()
   if (blocks.length == 0) {
     return
   }
-  output.innerText = `Websocket: ${websocket} status: ${websocket?.readyState}\nwatch token: ${watchToken}\nparams are ${window.location.search}\nfull location is ${window.location}\n`
+  let text = ''
   for (const block of blocks) {
     if (block.getParent() != null) continue
     const compiler = new bytecode.Compiler(ws)
     const code = compiler.compile(block)
     const disassembly = bytecode.disassemble(code)
-    output.innerText += `${disassembly}\n---\n`
+    text += `${disassembly}\n---\n`
   }
-  if (websocket?.readyState === WebSocket.OPEN) {
-    websocket?.send(output.innerText)
-  } else {
-    console.log('Websocket not ready yet :(')
-  }
+  output.innerText = text
 }
 
 if (ws) {
