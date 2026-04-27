@@ -34,7 +34,7 @@ var bytecodeBuffer
  */
 var bytecodeBufferOffset = 0
 function startTransmission(data) {
-  bytecodeBuffer = data
+  bytecodeBuffer = atob(data.bytecode)
   bytecodeBufferOffset = 0
   transmissionState = 'transmittingBytecode'
   transmitBytecode()
@@ -44,18 +44,26 @@ function transmitBytecode() {
   if (transmissionState !== 'transmittingBytecode') {
     return
   }
-  var dict = { Bytecode: '' }
+  console.log(`Transmitting chunk ${bytecodeBufferOffset / 16}`)
+  var dict = {}
+  dict[keys.Bytecode] = []
   var transmitted = 0
   for (; transmitted < 16; transmitted++) {
     if (bytecodeBufferOffset + transmitted > bytecodeBuffer.length) {
       transmissionState = 'ready'
       break
     }
-    dict['Bytecode'] = bytecodeBuffer.charCodeAt(bytecodeBufferOffset + transmitted)
+    dict[keys.Bytecode].push(bytecodeBuffer.charCodeAt(bytecodeBufferOffset + transmitted))
   }
   bytecodeBufferOffset += 16
-  dict['Bytecode'] = activeData.bytecode
-  Pebble.sendAppMessage(dict, () => {
-    transmitBytecode()
-  })
+  Pebble.sendAppMessage(
+    dict,
+    function () {
+      transmitBytecode()
+    },
+    function () {
+      console.log('Transmission failed :(')
+    }
+  )
+  console.log('hi')
 }

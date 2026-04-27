@@ -122,10 +122,15 @@ static void inbox_received_handler(DictionaryIterator *iter, void *ctx) {
   }
 }
 
+static void inbox_dropped_handler(AppMessageResult result, void *ctx) {
+  printf("Inbox dropped :( %d", result);
+}
+
 static void prv_init(void) {
-  s_window = window_create();
   app_message_open(256, 8);
   app_message_register_inbox_received(inbox_received_handler);
+  app_message_register_inbox_dropped(inbox_dropped_handler);
+  s_window = window_create();
   window_set_click_config_provider(s_window, prv_click_config_provider);
   window_set_window_handlers(s_window, (WindowHandlers){
                                            .load = prv_window_load,
