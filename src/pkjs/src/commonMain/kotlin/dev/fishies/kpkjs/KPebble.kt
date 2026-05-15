@@ -6,12 +6,12 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.startCoroutine
 import kotlin.coroutines.suspendCoroutine
 
-class KPebble {
+sealed class KPebble {
     val pebble: Pebble = js("Pebble")
     val events = Events()
 
     fun message(block: suspend AppMessageScope.() -> Unit = {}) =
-        block.startCoroutine(AppMessageScopeImpl(), Continuation(EmptyCoroutineContext) {})
+        block.startCoroutine(AppMessageScopeImpl(), exceptionPropagatingContinuation())
 
     private inner class AppMessageScopeImpl : AppMessageScope {
         var c: Continuation<Boolean>? = null
@@ -31,7 +31,7 @@ class KPebble {
     }
 
     interface ConfigurationCallbackScope {
-        suspend fun show(url: String): dynamic
+        suspend fun show(url: String): String
     }
 
     inner class Events internal constructor() {
@@ -39,15 +39,32 @@ class KPebble {
 
         fun onAppMessage(callback: (payload: dynamic) -> Unit) = pebble.addEventListener("appmessage", callback)
 
-        fun onShowConfiguration(callback: suspend ConfigurationCallbackScope.() -> Unit): Unit =
-            TODO() //pebble.addEventListener("showConfiguration", callback)
+        fun onConfigure(callback: suspend ConfigurationCallbackScope.() -> Unit) {
+            pebble.addEventListener("showConfiguration") {
+                callback.startCoroutine(ConfigurationCallbackScopeImpl(), exceptionPropagatingContinuation())
+            }
+        }
     }
 
-    //private inner class AppMessageScopeImpl : AppMessageScope {
-    //    override suspend fun succeeded(): Boolean {
-    //        TODO("Not yet implemented")
-    //    }
-    //}
-}
+    private inner class ConfigurationCallbackScopeImpl : ConfigurationCallbackScope {
+        var c: Continuation<dynamic>? = null
+        override suspend fun show(url: String): dynamic {
+            var webViewClosedCallback: ((dynamic) -> Unit)? = null
 
-val kPebble = KPebble()
+            webViewClosedCallback = { data: dynamic ->
+                pebble.removeEventListener("webviewclosed", webViewClosedCallback)
+                c?.resume(data.response)
+            }
+            pebble.addEventListener("webviewclosed", webViewClosedCallback)
+
+            pebble.openURL(url)
+            return suspendCoroutine { c = it }
+        }
+    }
+
+    companion object : KPebble()
+
+    private fun <T> exceptionPropagatingContinuation(): Continuation<T> = Continuation(EmptyCoroutineContext) { r ->
+        r.exceptionOrNull()?.let { throw it }
+    }
+}
