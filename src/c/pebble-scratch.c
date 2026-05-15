@@ -111,15 +111,15 @@ static void prv_window_unload(Window *window) {
 
 static void inbox_received_handler(DictionaryIterator *iter, void *ctx) {
   printf("Inbox received");
-  Tuple *bytecode_tuple = dict_find(iter, MESSAGE_KEY_Bytecode);
-  if (bytecode_tuple) {
-    // This value was stored as JS Number, which is stored here as int32_t
-    uint8_t *bytecode = bytecode_tuple->value->data;
-    printf("length: [%d]", bytecode_tuple->length);
-    for (int16_t i = 0; i < bytecode_tuple->length; i++) {
-      printf("%d", bytecode[i]);
-    }
-  }
+  // Tuple *bytecode_tuple = dict_find(iter, MESSAGE_KEY_Bytecode);
+  // if (bytecode_tuple) {
+  //   // This value was stored as JS Number, which is stored here as int32_t
+  //   uint8_t *bytecode = bytecode_tuple->value->data;
+  //   printf("length: [%d]", bytecode_tuple->length);
+  //   for (int16_t i = 0; i < bytecode_tuple->length; i++) {
+  //     printf("%d", bytecode[i]);
+  //   }
+  // }
 }
 
 static void inbox_dropped_handler(AppMessageResult result, void *ctx) {
