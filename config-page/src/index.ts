@@ -28,7 +28,29 @@ const theme = Blockly.Theme.defineTheme('theme', {
 
 const blocklyDiv = document.getElementById('blocklyDiv')!
 const output = document.getElementById('generatedCode')!
+const logOutput = document.getElementById('logOutput')!
 const bigGreenButton = document.getElementById('runButton')!
+
+{
+  const makeLoggerFunction =
+    (base: (...args: any[]) => void, clazz: string) =>
+    (...args: any[]) => {
+      for (const arg of args) {
+        const child = document.createElement('p')
+        child.className = `output output-${clazz}`
+        child.innerText = typeof arg == 'string' ? arg : JSON.stringify(arg)
+        logOutput.appendChild(child)
+      }
+      base(...args)
+    }
+  console.log = makeLoggerFunction(console.log, 'log')
+  console.warn = makeLoggerFunction(console.warn, 'warn')
+  console.error = makeLoggerFunction(console.error, 'error')
+}
+
+console.log('This is a log')
+console.warn('This is a warn')
+console.error('This is an error')
 
 class CompactZelosConstants extends Blockly.zelos.ConstantProvider {
   constructor() {
@@ -101,13 +123,15 @@ bigGreenButton.onclick = () => {
     bytecode: btoa(string),
     handlers: compilationResult.handlers,
   }
-  console.log(data)
-  location.href = `pebblejs://close#${encodeURIComponent(JSON.stringify(data))}`
+  if (window.confirm('Close?')) {
+    location.href = `pebblejs://close#${encodeURIComponent(JSON.stringify(data))}`
+  }
 }
 
 if (ws) {
   const urlParams = new URLSearchParams(window.location.search)
   const workspaceString = urlParams.get('workspace')
+  console.log(`Loading from workspace string \`${workspaceString}\``)
   load(ws, workspaceString)
 
   recompile()

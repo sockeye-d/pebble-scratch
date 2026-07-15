@@ -25,37 +25,51 @@ function throwError(message?: string): never {
 
 export function compileAllBlocks(ws: Workspace, compiler: Compiler) {
   const functionMap: Record<string, number> = {}
-  const handlers: Record<number, number[]> = {}
+  const handlers: Record<EventType, number[]> = {
+    [EventType.Main]: [],
+    [EventType.BtnBack]: [],
+    [EventType.BtnTop]: [],
+    [EventType.BtnMiddle]: [],
+    [EventType.BtnBottom]: [],
+    [EventType.Tapped]: [],
+    [EventType.TimeSecond]: [],
+    [EventType.TimeMinute]: [],
+    [EventType.TimeHour]: [],
+    [EventType.TimeDay]: [],
+    [EventType.TimeMonth]: [],
+    [EventType.TimeYear]: [],
+    [EventType.LayerRedraw]: [],
+  }
   const bits = <Uint32Array[]>[]
   const functionBytecode: Record<string, VmInstruction[]> = {}
   let bitsLength = 0
   for (const fn of [...ws.getBlocksByType('procedures_defnoreturn'), ...ws.getBlocksByType('procedures_defreturn')]) {
+    console.log(`Compiling procedure ${fn.getFieldValue('NAME')}`)
     const bytecode = [...compiler.compile(fn), ...ops.op(VmOp.Eof)]
     const fnName = fn.getFieldValue('NAME')!
     functionBytecode[fnName] = bytecode
     functionMap[fnName] = bitsLength
     bitsLength += bytecode.length
   }
-  const bytecodeToBinary = (e: VmInstruction[]) => generateBinaryBytecode(e, (name) => functionMap[name])
-  bits.push(...Object.entries(functionBytecode).map(([_, e]) => bytecodeToBinary(e)))
-  const finalBits = new Uint32Array(bits.map((e) => e.length).reduce((a, b) => a + b, 0))
-  let currentOffset = 0
-  for (const bit of bits) {
-    finalBits.set(bit, currentOffset)
-    currentOffset += bit.length
+  const bytecodeToBinary = (e: VmInstruction[]) => {
+    console.log(`Compiling ${e.length} instructions to binary`)
+    return generateBinaryBytecode(e, (name) => functionMap[name])
   }
+  bits.push(...Object.entries(functionBytecode).map(([_, e]) => bytecodeToBinary(e)))
   const generateHandlerBinary = (type: string, eventType: ((block: Block) => EventType) | EventType) => {
     for (const fn of ws.getBlocksByType(type)) {
       const input = fn.getInputTargetBlock('DO')
+      console.log(`Compiling ${type} handler ${fn.id}`)
       if (input === null) {
+        console.warn(`Block ${fn.id} has no body`)
         continue
       }
       const bytecode = [...compiler.compile(input), ...ops.op(VmOp.Eof)]
-      const type = typeof eventType === 'function' ? eventType(input) : eventType
-      if (!(type in handlers)) {
-        handlers[type] = []
+      const type2 = typeof eventType === 'function' ? eventType(input) : eventType
+      if (!(type2 in handlers)) {
+        handlers[type2] = []
       }
-      handlers[type].push(bitsLength)
+      handlers[type2].push(bitsLength)
       bits.push(bytecodeToBinary(bytecode))
       bitsLength += bytecode.length
     }
@@ -83,5 +97,12 @@ export function compileAllBlocks(ws: Workspace, compiler: Compiler) {
     return EventType.TimeSecond
   })
   generateHandlerBinary('graphics_bind_on_draw', EventType.LayerRedraw)
+  const finalBits = new Uint32Array(bits.map((e) => e.length).reduce((a, b) => a + b, 0))
+  let currentOffset = 0
+  for (const bit of bits) {
+    finalBits.set(bit, currentOffset)
+    currentOffset += bit.length
+  }
+  console.log(`Final instruction count: ${finalBits.length}`)
   return { bytecode: finalBits, handlers }
 }

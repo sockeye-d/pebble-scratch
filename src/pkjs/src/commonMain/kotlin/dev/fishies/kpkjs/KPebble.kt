@@ -2,7 +2,9 @@ package dev.fishies.kpkjs
 
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.startCoroutine
 import kotlin.coroutines.suspendCoroutine
 
@@ -14,20 +16,20 @@ sealed class KPebble {
         block.startCoroutine(AppMessageScopeImpl(), exceptionPropagatingContinuation())
 
     private inner class AppMessageScopeImpl : AppMessageScope {
-        var c: Continuation<Boolean>? = null
-        override suspend fun send(message: dynamic): Boolean {
+        var c: Continuation<Unit>? = null
+        override suspend fun send(message: dynamic) {
             // surely this is not the world's worst race condition :)
             pebble.sendAppMessage(message, {
-                c?.resume(true)
+                c?.resume(Unit)
             }, {
-                c?.resume(false)
+                c?.resumeWithException(CancellationException())
             })
             return suspendCoroutine { c = it }
         }
     }
 
     interface AppMessageScope {
-        suspend fun send(message: dynamic): Boolean
+        suspend fun send(message: dynamic)
     }
 
     interface ConfigurationCallbackScope {

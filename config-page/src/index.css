@@ -52,6 +52,11 @@ code {
   margin: 0;
 }
 
+#logOutput {
+  flex: 1 1;
+  margin: 0;
+}
+
 #outputPane > .bottomBar {
   flex: 0 0 30px;
   display: flex;
@@ -75,4 +80,20 @@ code {
 
 .blocklyDropDownContent {
   max-height: unset; /* @todo: spec for maximum height. */
+}
+
+#logOutput > * {
+  margin: 0;
+}
+
+.output-log {
+  color: var(--text-color);
+}
+
+.output-warn {
+  color: yellow;
+}
+
+.output-error {
+  color: red;
 }

@@ -19,14 +19,18 @@ fun main() {
         println("sending message...")
         val data = js("{}")
         data["Ack"] = "Ack"
-
-        println("Worked? ${send(data)}")
+        try {
+            send(data)
+            println("Success")
+        } catch (e: Exception) {
+            println("Failed to send message.")
+        }
     }
 
     KPebble.events.onConfigure {
         val savedData = localStorage.getItem(workspaceStorageKey)
         val url = buildString {
-            append("https://fishies.dev/pebble-scratch/")
+            append("http://192.168.1.219:8080/")
             if (savedData != null) {
                 append("?workspace=${encodeURIComponent(savedData)}")
             }
@@ -36,6 +40,18 @@ fun main() {
         localStorage.setItem(workspaceStorageKey, JSON.stringify(response.ws))
         val byteArray = base64ToByteArray(response.bytecode)
         println("Bytes are ${byteArray.contentToString()}")
+        KPebble.message {
+            println("sending message...")
+            val data = js("{}")
+            data["Bytecode"] = byteArray.toTypedArray()
+            println("Result was ${JSON.stringify(data)}")
+            try {
+                send(data)
+                println("Success")
+            } catch (e: Exception) {
+                println("Failed to send message.")
+            }
+        }
     }
 }
 
