@@ -1,9 +1,3 @@
-/**
- * @license
- * Copyright 2023 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import * as Blockly from 'blockly/core'
 
 const storageKey = 'mainWorkspace'
@@ -24,7 +18,7 @@ export function save(workspace: Blockly.Workspace): string {
  * @param workspace Blockly workspace to load into.
  */
 export function load(workspace: Blockly.Workspace, workspaceJson?: string | null) {
-  const data =
+  let data: any =
     workspaceJson ??
     (() => {
       console.log('Loading from local storage...')
@@ -36,8 +30,11 @@ export function load(workspace: Blockly.Workspace, workspaceJson?: string | null
   }
 
   try {
-    console.log(JSON.parse(data))
-    Blockly.serialization.workspaces.load(JSON.parse(data), workspace, undefined)
+    data = JSON.parse(data)
+    if (typeof data == 'string') {
+      data = JSON.parse(data)
+    }
+    Blockly.serialization.workspaces.load(data, workspace, { recordUndo: false })
     console.log('Loading complete!')
     console.log(`Loaded ${workspace.getAllBlocks().length} blocks`)
   } catch (e) {

@@ -20,16 +20,20 @@ function initializeLogs() {
         child.className = `output output-${clazz}`
         child.innerText = typeof arg == 'string' ? arg : JSON.stringify(arg)
         logOutput.appendChild(child)
+        logOutput.scrollTo({
+          top: logOutput.scrollHeight,
+        })
       }
       base(...args)
     }
+  console.debug = makeLoggerFunction(console.debug, 'debug')
   console.log = makeLoggerFunction(console.log, 'log')
   console.warn = makeLoggerFunction(console.warn, 'warn')
   console.error = makeLoggerFunction(console.error, 'error')
 }
 
 async function main() {
-  Blockly.fieldRegistry.register('field_color', ColorField)
+  // Blockly.fieldRegistry.register('field_color', ColorField)
   Blockly.common.defineBlocks(core.blocks)
   Blockly.common.defineBlocks(pebble.blocks)
   console.log(Object.keys(Blockly.Blocks))
@@ -47,10 +51,19 @@ async function main() {
     },
   })
 
+  const body = document.querySelector('body')
+
+  if (body != null) {
+    body.style.setProperty('--bg-color', theme.getComponentStyle('workspaceBackgroundColour'))
+    body.style.setProperty('--text-color', theme.getComponentStyle('toolboxForegroundColour'))
+  }
+
   const blocklyDiv = document.getElementById('blocklyDiv')!
   const output = document.getElementById('generatedCode')!
   const bigGreenButton = document.getElementById('runButton')!
-  console.log('div dimensions:', blocklyDiv.offsetWidth, blocklyDiv.offsetHeight)
+  console.debug(navigator.userAgent)
+  console.debug(Blockly.VERSION)
+  console.debug('This is a debug')
   console.log('This is a log')
   console.warn('This is a warn')
   console.error('This is an error')
@@ -77,16 +90,33 @@ async function main() {
     },
   })
 
+  if (!ws) {
+    console.error('Workspace was null')
+    return
+  }
+
   ws.updateToolbox(toolbox(ws))
 
-  ws.clear()
+  // ws.clear()
 
-  const body = document.querySelector('body')
+  const urlParams = new URLSearchParams(window.location.search)
+  const workspaceString = urlParams.get('workspace')
+  console.log(`Loading from workspace string \`${workspaceString}\``)
+  load(ws, workspaceString)
 
-  if (body != null) {
-    body.style.setProperty('--bg-color', theme.getComponentStyle('workspaceBackgroundColour'))
-    body.style.setProperty('--text-color', theme.getComponentStyle('toolboxForegroundColour'))
-  }
+  recompile()
+
+  ws.addChangeListener((e) => {
+    if (e.type === Blockly.Events.VAR_DELETE) {
+      const toolbox = ws.getToolbox()
+      toolbox?.refreshSelection()
+    }
+    if (e.isUiEvent || e.type == Blockly.Events.FINISHED_LOADING || ws.isDragging()) {
+      return
+    }
+    save(ws)
+    recompile()
+  })
 
   function recompile() {
     const blocks = ws.getAllBlocks()
@@ -125,31 +155,6 @@ async function main() {
     if (window.confirm('Close?')) {
       location.href = `pebblejs://close#${encodeURIComponent(JSON.stringify(data))}`
     }
-  }
-
-  if (ws) {
-    const urlParams = new URLSearchParams(window.location.search)
-    const workspaceString = urlParams.get('workspace')
-    console.log(`Loading from workspace string \`${workspaceString}\``)
-    load(ws, workspaceString)
-
-    recompile()
-
-    ws.addChangeListener((e) => {
-      if (e.isUiEvent) return
-      save(ws)
-    })
-
-    ws.addChangeListener((e) => {
-      if (e.type === Blockly.Events.VAR_DELETE) {
-        const toolbox = ws.getToolbox()
-        toolbox?.refreshSelection()
-      }
-      if (e.isUiEvent || e.type == Blockly.Events.FINISHED_LOADING || ws.isDragging()) {
-        return
-      }
-      recompile()
-    })
   }
 }
 

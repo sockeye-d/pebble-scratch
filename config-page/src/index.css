@@ -86,6 +86,11 @@ code {
   margin: 0;
 }
 
+.output-debug {
+  color: var(--text-color);
+  opacity: 50%;
+}
+
 .output-log {
   color: var(--text-color);
 }
