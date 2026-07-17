@@ -97,3 +97,10 @@ code {
 .output-error {
   color: red;
 }
+
+.divider {
+  height: 1px;
+  background-color: var(--text-color);
+  margin: 1rem 0 1rem 0;
+  opacity: 0.5;
+}

@@ -35,7 +35,8 @@ fun main() {
         val savedData = localStorage.getItem(workspaceStorageKey)
         println("savedData: $savedData")
         val url = buildString {
-            append("http://192.168.1.219:8080/")
+            //append("http://192.168.1.219:8080/")
+            append("https://fishies.dev/pebble-scratch")
             if (savedData != null) {
                 append("?workspace=${encodeURIComponent(savedData)}")
             }

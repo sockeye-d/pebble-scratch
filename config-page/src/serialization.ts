@@ -35,16 +35,14 @@ export function load(workspace: Blockly.Workspace, workspaceJson?: string | null
     return
   }
 
-  // Don't emit events during loading.
-  Blockly.Events.disable()
   try {
+    console.log(JSON.parse(data))
     Blockly.serialization.workspaces.load(JSON.parse(data), workspace, undefined)
+    console.log('Loading complete!')
+    console.log(`Loaded ${workspace.getAllBlocks().length} blocks`)
   } catch (e) {
     if (confirm('Something went wrong. Clear local storage?')) {
       window.localStorage.removeItem(storageKey)
     }
-  } finally {
-    Blockly.Events.enable()
   }
-  console.log('Loading complete!')
 }
