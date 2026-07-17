@@ -1,8 +1,7 @@
 #ifndef __SRC_C_PEBBLE_FOREIGN_FUNCS_H
 #define __SRC_C_PEBBLE_FOREIGN_FUNCS_H
 
-#include "vm.h"
-#include <stdint.h>
+#include "vm_minimal.h"
 
 typedef struct VmState VmState;
 

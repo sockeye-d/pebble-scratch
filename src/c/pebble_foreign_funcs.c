@@ -451,5 +451,6 @@ PBL_BIND(sensors_print);
 #endif
 
 VmStepResult pebble_foreign_func_call_handler(VmState *state, int32_t call_id) {
+  printf("Calling %d", call_id);
   return handlers[call_id](state);
 }

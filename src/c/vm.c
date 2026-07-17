@@ -1,3 +1,7 @@
+// clang-format off
+#include <stdlib.h>
+// clang-format on
+
 #include "vm.h"
 
 #include "trig.h"
@@ -6,7 +10,6 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #pragma GCC diagnostic ignored "-Wformat"
@@ -54,16 +57,13 @@ void cleanup_val_str(VmState *state, VmString *value) { string_unref(value); }
 
 #define VM_STRING_MINIMUM_ALLOC 4
 
-VmString *string_fmt(char *fmt, ...) {
+VmString *string_fmt_num(int32_t places, double num) {
   size_t allocation_size = VM_STRING_MINIMUM_ALLOC;
   char *str = NULL;
   while (true) {
     str = malloc(sizeof(char) * allocation_size);
 
-    va_list va_args;
-    va_start(va_args, fmt);
-    size_t written = vsnprintf(str, allocation_size, fmt, va_args);
-    va_end(va_args);
+    size_t written = snprintf(str, allocation_size, "%.*f", places, num);
 
     if (written <= allocation_size) {
       MAKE_STRING(r, str, written);
@@ -202,7 +202,7 @@ inline __attribute__((__always_inline__)) VmString *coerce_str(VmValue value) {
     // this cast is probably fine
     return value.b ? (VmString *)&string_true : (VmString *)&string_false;
   }
-  return string_fmt("%.2f", NUM_AS_FLOAT(value.num));
+  return string_fmt_num(2, NUM_AS_FLOAT(value.num));
 }
 
 inline __attribute__((__always_inline__)) bool coerce_bool(VmValue value) {
@@ -313,7 +313,7 @@ VmStepResult vm_step(VmState *state) {
         (char *)&state->instructions[state->pc], &string_length);
     // Increment program counter by the length of the string divided by the
     // number of chars per instruction, rounded up.
-    state->pc += (string_length + sizeof(size_t) - 1) / sizeof(size_t);
+    state->pc += (string_length + 4 - 1) / 4;
     PUSH() = (VmValue){.type = TYPE_STRING, .string = literal};
     REF_STACK();
   } break;
@@ -647,7 +647,7 @@ VmStepResult vm_step(VmState *state) {
     int32_t decimal_places = COERCE_INT(_b);
     PUSH() = (VmValue){
         .type = TYPE_STRING,
-        .string = string_fmt("%.*f", decimal_places, num),
+        .string = string_fmt_num(decimal_places, num),
     };
     REF_STACK();
     cleanup_val(state, _a);
@@ -656,7 +656,7 @@ VmStepResult vm_step(VmState *state) {
   case OP_PRINT: {
     VmValue _a = POP();
     VmString *str = COERCE_STR(_a);
-    printf("%s\n", str->value);
+    print("%s\n", str->value);
     cleanup_val_str(state, str);
   } break;
   case OP_CALL_FOREIGN: {
@@ -711,36 +711,36 @@ VmStepResult vm_step(VmState *state) {
   return STEP_RESULT_CONTINUE;
 }
 
-void print_value(VmValue value) {
+void vm_print_value(VmValue value) {
   switch (value.type) {
   case TYPE_NIL: {
-    printf("TYPE_NIL");
+    print("TYPE_NIL");
   } break;
   case TYPE_NUM: {
-    printf("TYPE_NUM=%.2f", NUM_AS_DOUBL(value.num));
+    print("TYPE_NUM=%.2f", NUM_AS_DOUBL(value.num));
   } break;
   case TYPE_BOOL: {
     if (value.b) {
-      printf("TYPE_BOOL=true");
+      print("TYPE_BOOL=true");
     } else {
-      printf("TYPE_BOOL=false");
+      print("TYPE_BOOL=false");
     }
   } break;
   case TYPE_STRING: {
     uint16_t refcount = value.string->refcount;
     if (refcount == (uint16_t)-1) {
-      printf("TYPE_STRING=%s, refcount=literal,", value.string->value);
+      print("TYPE_STRING=%s, refcount=literal,", value.string->value);
     } else {
-      printf("TYPE_STRING=%s, refcount=%u,", value.string->value, refcount);
+      print("TYPE_STRING=%s, refcount=%u,", value.string->value, refcount);
     }
   } break;
   case TYPE_PTR: {
-    printf("TYPE_PTR=%u", value.ptr);
+    print("TYPE_PTR=%u", value.ptr);
   } break;
   }
 }
 
-const char *print_instruction(VmInstruction instruction) {
+const char *vm_print_instruction(VmInstruction instruction) {
   switch (instruction.op) {
   case OP_NOP:
     return "OP_NOP";
@@ -861,27 +861,42 @@ const char *print_instruction(VmInstruction instruction) {
 }
 
 void vm_print_state(VmState *state) {
-  printf("PC = %u\nsp = %d\n", state->pc, (int32_t)state->stack_ptr);
+  print("PC = %u\nsp = %d\n", state->pc, (int32_t)state->stack_ptr);
   if (state->stack_ptr == (uint32_t)-1) {
-    printf("no stack yet\n");
+    print("no stack yet\n");
   } else {
     for (uint32_t i = 0; i <= state->stack_ptr; i++) {
       if (i >= MAX_STACK) {
-        printf("Stack overflow!\n");
+        print("Stack overflow!\n");
         break;
       }
-      printf("%d = ", i);
-      print_value(state->stack[i]);
-      printf("\n");
+      print("%d = ", i);
+      vm_print_value(state->stack[i]);
+      print("\n");
     }
   }
   int32_t var_i = -1;
   VmValue var;
   while (var_i < MAX_VARS && (var = state->vars[++var_i]).type != TYPE_NIL) {
-    printf("var %d = ", var_i);
-    print_value(var);
-    printf("\n");
+    print("var %d = ", var_i);
+    vm_print_value(var);
+    print("\n");
   }
-  printf("next instruction = %s\n", print_instruction(PEEK_INSTRUCTION()));
-  printf("-----\n");
+  print("next instruction = %s\n", vm_print_instruction(PEEK_INSTRUCTION()));
+  print("-----\n");
+}
+
+void vm_init(VmState *state, VmInstruction *instructions) {
+  state->instructions = instructions;
+  state->call_handler = NULL;
+  state->vars = NULL;
+  state->pc = 0;
+  state->stack_ptr = 0;
+  state->call_stack_ptr = 0;
+}
+
+VmState *vm_create(VmInstruction *instructions) {
+  VmState *state = malloc(sizeof(VmState));
+  vm_init(state, instructions);
+  return state;
 }

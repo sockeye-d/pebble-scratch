@@ -1,16 +1,9 @@
 #ifndef __SRC_C_VM_H
 #define __SRC_C_VM_H
 
+#include "vm_minimal.h"
 #include <stdbool.h>
 #include <stddef.h>
-#include <stdint.h>
-
-typedef enum {
-  STEP_RESULT_CONTINUE,
-  STEP_RESULT_SUSPEND,
-  STEP_RESULT_PAUSE,
-  STEP_RESULT_DONE,
-} VmStepResult;
 
 typedef enum {
   OP_NOP,
@@ -80,9 +73,9 @@ typedef enum {
   TYPE_PTR,
 } VmType;
 
-#define MAX_STACK 256
+#define MAX_STACK 16
 #define MAX_CALL_STACK 32
-#define MAX_VARS 256
+#define MAX_VARS 128
 
 typedef struct {
   size_t length;
@@ -135,6 +128,15 @@ typedef struct {
     }                                                                          \
   } while (false)
 
+#define DA_RESERVE(m_list, m_new_capacity)                                     \
+  do {                                                                         \
+    if (m_list.capacity < m_new_capacity) {                                    \
+      m_list.items =                                                           \
+          realloc(m_list.items, m_new_capacity * sizeof(*m_list.items));       \
+      m_list.capacity = m_new_capacity;                                        \
+    }                                                                          \
+  } while (false)
+
 #define DA_APPEND(m_list, m_element)                                           \
   do {                                                                         \
     if (m_list.count >= m_list.capacity) {                                     \
@@ -147,6 +149,13 @@ typedef struct {
           realloc(m_list.items, m_list.capacity * sizeof(*m_list.items));      \
     }                                                                          \
     m_list.items[m_list.count++] = (m_element);                                \
+  } while (false)
+
+#define DA_FREE(m_list)                                                        \
+  do {                                                                         \
+    if (m_list.items != NULL) {                                                \
+      free(m_list.items);                                                      \
+    }                                                                          \
   } while (false)
 
 /**
@@ -169,7 +178,7 @@ typedef union {
   VmOp op;
   int32_t num;
   uint32_t var;
-  char ch[sizeof(int32_t)];
+  char ch[4];
 } VmInstruction;
 
 typedef struct VmState VmState;
@@ -192,13 +201,25 @@ struct VmState {
   VmInstruction *instructions;
 };
 
+extern void print(const char *fmt, ...);
+extern void print_debug(const char *str);
+
 VmString *coerce_str(VmValue value);
 
 void cleanup_val(VmState *state, VmValue value);
 void cleanup_val_str(VmState *state, VmString *value);
 bool coerce_bool(VmValue value);
 
+void vm_print_value(VmValue value);
+const char *vm_print_instruction(VmInstruction instruction);
+
 VmStepResult vm_step(VmState *state);
 void vm_print_state(VmState *state);
+
+void vm_init(VmState *state, VmInstruction *instructions);
+VmState *vm_create(VmInstruction *instructions);
+
+extern void *malloc(size_t size);
+extern void *realloc(void *ptr, size_t size);
 
 #endif

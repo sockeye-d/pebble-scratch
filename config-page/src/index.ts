@@ -110,17 +110,25 @@ function recompile() {
   }
 }
 
+function convertU32toU8(u32: number) {
+  return [(u32 << 0) & 0xff, (u32 << 2) & 0xff, (u32 << 4) & 0xff, (u32 << 6) & 0xff]
+}
+
 bigGreenButton.onclick = () => {
   const compiler = new bytecode.Compiler(ws)
   const compilationResult = compileAllBlocks(ws, compiler)
   const workspaceData = save(ws)
-  let string = ''
-  for (const e of new Uint8Array(compilationResult.bytecode.buffer)) {
-    string += String.fromCharCode(e)
-  }
+  // let string = ''
+  // for (const e of compilationResult.bytecode) {
+  //   console.log(`${e}`)
+  //   string += convertU32toU8(e)
+  //     .map((c) => String.fromCharCode(c))
+  //     .join('')
+  // }
+  console.log(compilationResult.bytecode)
   const data = {
     ws: workspaceData,
-    bytecode: btoa(string),
+    bytecode: [...compilationResult.bytecode],
     handlers: compilationResult.handlers,
   }
   if (window.confirm('Close?')) {

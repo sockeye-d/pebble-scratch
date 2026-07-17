@@ -202,6 +202,7 @@ export function generateBinaryBytecode(instructions: VmInstruction[], resolveCal
         {
           let num = instruction.num
           if (Math.abs(num) > vmMaxRepresentableNum) {
+            console.error(`Number ${num} is not representable (max: ${vmMaxRepresentableNum})`)
             num = 0
           }
           r[index] = (num * 256) | 0

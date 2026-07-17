@@ -18,15 +18,17 @@
     "sdkVersion": "3",
     "enableMultiJS": true,
     "targetPlatforms": [
-      "basalt"
+      "emery"
     ],
     "watchapp": {
       "watchface": false
     },
     "messageKeys": [
       "Ack",
+      "BytecodeHeader",
       "Bytecode",
-      "Handlers"
+      "Handlers",
+      "TransmissionComplete"
     ],
     "resources": {
       "media": []

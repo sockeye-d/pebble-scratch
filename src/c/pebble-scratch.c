@@ -1,7 +1,9 @@
+// clang-format off
+#include <pebble.h>
+// clang-format on
 #include "message_keys.auto.h"
 #include "pebble_foreign_funcs.h"
 #include "vm.h"
-#include <pebble.h>
 
 static Window *s_window;
 static TextLayer *s_text_layer;
@@ -20,6 +22,7 @@ typedef enum {
   EVENT_TIME_MONTH,
   EVENT_TIME_YEAR,
   EVENT_LAYER_REDRAW,
+  EVENT_MAX,
 } EventType;
 
 Layer *layers;
@@ -30,14 +33,31 @@ typedef struct {
 } Handler;
 
 typedef struct {
-
+  AppTimer *resume_timer;
+  VmState state;
 } BlockStack;
 
-VmValue vars[256];
+typedef struct {
+  int32_t count;
+  int32_t capacity;
+  BlockStack *items;
+} BlockStacks;
+
+BlockStacks block_stacks[EVENT_MAX] = {};
+VmInstruction *instructions = NULL;
+int32_t instruction_capacity = 0;
+int32_t instruction_length = 0;
+
+VmValue vars[256] = {};
+
+void print(const char *fmt, ...) {}
+
+void print_debug(const char *str) { printf("%s"); }
 
 static void tick_vm(void *data) {
   VmState *state = (VmState *)data;
   while (true) {
+    printf("%s", vm_print_instruction(state->instructions[state->pc]));
     const VmStepResult result = vm_step(state);
     if (result == STEP_RESULT_DONE || result == STEP_RESULT_PAUSE) {
       break;
@@ -63,16 +83,16 @@ VmStepResult sensors_print(VmState *state) {
   return STEP_RESULT_CONTINUE;
 }
 
-VmState *init_vm(VmInstruction *instructions) {
-  VmState *state = malloc(sizeof(VmState));
-  state->instructions = instructions;
-  state->call_handler = pebble_foreign_func_call_handler;
-  state->vars = vars;
-  state->pc = 0;
-  state->stack_ptr = 0;
-  state->call_stack_ptr = 0;
-  tick_vm((void *)state);
-  return state;
+void execute_event(EventType event) {
+  printf("Executing event %d", event);
+  for (int32_t i = 0; i < block_stacks[event].count; i++) {
+    printf("Executing stack %d", i);
+    BlockStack *stack = &block_stacks[event].items[i];
+    if (stack->resume_timer) {
+      app_timer_cancel(stack->resume_timer);
+    }
+    tick_vm(&stack->state);
+  }
 }
 
 static void prv_select_click_handler(ClickRecognizerRef recognizer,
@@ -110,15 +130,70 @@ static void prv_window_unload(Window *window) {
 }
 
 static void inbox_received_handler(DictionaryIterator *iter, void *ctx) {
-  printf("Inbox received");
+  Tuple *bytecode_header_tuple = dict_find(iter, MESSAGE_KEY_BytecodeHeader);
+  if (bytecode_header_tuple) {
+    int32_t instruction_count =
+        bytecode_header_tuple->value->int32 / sizeof(VmInstruction);
+    printf("Header received. Byte length = %d", instruction_count);
+    if (instructions != NULL) {
+      free(instructions);
+      for (int i = 0; i < EVENT_MAX; i++) {
+        DA_FREE(block_stacks[i]);
+      }
+    }
+    instructions = malloc(instruction_count * sizeof(VmInstruction));
+    instruction_length = 0;
+    instruction_capacity = instruction_count;
+  }
   Tuple *bytecode_tuple = dict_find(iter, MESSAGE_KEY_Bytecode);
   if (bytecode_tuple) {
-    // This value was stored as JS Number, which is stored here as int32_t
     uint8_t *bytecode = bytecode_tuple->value->data;
-    printf("length: [%d]", bytecode_tuple->length);
-    for (int16_t i = 0; i < bytecode_tuple->length; i++) {
-      printf("%d", bytecode[i]);
+    printf("Bytecode chunk received, length: [%d]", bytecode_tuple->length);
+    if ((bytecode_tuple->length / 4) * 4 != bytecode_tuple->length) {
+      printf("Bytecode length is not a multiple of 4");
     }
+    for (uint16_t i = 0; i < bytecode_tuple->length; i += 4) {
+      uint32_t data = bytecode[i] | (bytecode[i + 1] << 8) |
+                      (bytecode[i + 2] << 16) | (bytecode[i + 3] << 24);
+      union {
+        uint32_t data;
+        VmInstruction instruction;
+      } reinterpret = {.data = data};
+      if (instruction_length >= instruction_capacity) {
+        APP_LOG(APP_LOG_LEVEL_ERROR,
+                "More instructions were given than expected (%d)!",
+                instruction_capacity);
+        return;
+      }
+      instructions[instruction_length++] = reinterpret.instruction;
+    }
+    if (instruction_length == instruction_capacity) {
+      printf("Loaded all instructions!");
+    }
+  }
+  Tuple *handler_tuple = dict_find(iter, MESSAGE_KEY_Handlers);
+  if (handler_tuple) {
+    uint8_t *data = handler_tuple->value->data;
+    for (uint16_t i = 0; i < handler_tuple->length; i += 5) {
+      EventType event_type = data[i];
+      int32_t event_pc = data[i + 1] | (data[i + 2] << 8) |
+                         (data[i + 3] << 16) | (data[i + 4] << 24);
+      printf("Loading handler %d (type = %d, pc = %d)", i / 5, event_type,
+             event_pc);
+      DA_RESERVE(block_stacks[event_type], 1);
+      DA_APPEND(block_stacks[event_type], (BlockStack){});
+      printf("Initializing VM…");
+      VmState *stack = &block_stacks[event_type]
+                            .items[block_stacks[event_type].count - 1]
+                            .state;
+      vm_init(stack, &instructions[event_pc]);
+      stack->call_handler = pebble_foreign_func_call_handler;
+    }
+  }
+  Tuple *finished = dict_find(iter, MESSAGE_KEY_TransmissionComplete);
+  if (finished) {
+    printf("Transmission finished");
+    execute_event(EVENT_MAIN);
   }
 }
 
