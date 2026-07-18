@@ -8,6 +8,7 @@ export enum PebbleForeignFunc {
   GraphicsBindFillCircle,
   GraphicsBindDrawRect,
   GraphicsBindFillRect,
+  GraphicsBindRedraw,
   GraphicsBindDrawLine,
   GraphicsBindSetAlignment,
   GraphicsBindDrawText,

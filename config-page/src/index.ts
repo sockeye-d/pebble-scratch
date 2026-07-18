@@ -33,7 +33,7 @@ function initializeLogs() {
 }
 
 async function main() {
-  // Blockly.fieldRegistry.register('field_color', ColorField)
+  Blockly.fieldRegistry.register('field_color', ColorField)
   Blockly.common.defineBlocks(core.blocks)
   Blockly.common.defineBlocks(pebble.blocks)
   console.log(Object.keys(Blockly.Blocks))

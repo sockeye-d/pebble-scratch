@@ -4,9 +4,10 @@
 #include "message_keys.auto.h"
 #include "pebble_foreign_funcs.h"
 #include "vm.h"
+#include "vm_minimal.h"
 
 static Window *s_window;
-static TextLayer *s_text_layer;
+static Layer *main_layer;
 
 typedef enum {
   EVENT_MAIN,
@@ -35,6 +36,8 @@ typedef struct {
 typedef struct {
   AppTimer *resume_timer;
   VmState state;
+  EventType event;
+  int32_t block_stack;
 } BlockStack;
 
 typedef struct {
@@ -52,17 +55,34 @@ VmValue vars[256] = {};
 
 void print(const char *fmt, ...) {}
 
+void print_error(const char *str) { APP_LOG(APP_LOG_LEVEL_ERROR, "%s", str); }
+
+BlockStack *active_stack = NULL;
+bool instant = false;
+
 static void tick_vm(void *data) {
-  VmState *state = (VmState *)data;
+  BlockStack *stack = (BlockStack *)data;
+  printf("Resuming %d:%d", stack->event, stack->block_stack);
+  stack->resume_timer = NULL;
+  active_stack = stack;
+  VmState *state = &stack->state;
   while (true) {
     printf("pc: %d", state->pc);
     VmInstruction current_instruction = state->instructions[state->pc];
     printf("%s", vm_print_instruction(current_instruction));
     const VmStepResult result = vm_step(state);
-    if (result == STEP_RESULT_DONE || result == STEP_RESULT_PAUSE) {
+    active_stack = NULL;
+    if (result == STEP_RESULT_DONE) {
+      if (stack->resume_timer) {
+        app_timer_cancel(stack->resume_timer);
+      }
       break;
-    } else if (result == STEP_RESULT_SUSPEND) {
-      app_timer_register(100, tick_vm, state);
+    } else if (result == STEP_RESULT_PAUSE) {
+      break;
+    } else if (result == STEP_RESULT_SUSPEND && !instant) {
+      printf("Suspending %d:%d", stack->event, stack->block_stack);
+      stack->resume_timer = app_timer_register(100, tick_vm, stack);
+      break;
     }
   }
 }
@@ -70,7 +90,9 @@ static void tick_vm(void *data) {
 VmStepResult controls_wait(VmState *state) {
   VmValue _1 = POP();
   VmNum duration = COERCE_NUM(_1);
-  app_timer_register(duration * 1000 / VM_NUM_RATIO, tick_vm, state);
+  printf("Waiting %d:%d", active_stack->event, active_stack->block_stack);
+  active_stack->resume_timer =
+      app_timer_register(duration * 1000 / VM_NUM_RATIO, tick_vm, active_stack);
   cleanup_val(state, _1);
   return STEP_RESULT_PAUSE;
 }
@@ -83,30 +105,68 @@ VmStepResult sensors_print(VmState *state) {
   return STEP_RESULT_CONTINUE;
 }
 
+VmStepResult graphics_bind_redraw(VmState *state) {
+  layer_mark_dirty(main_layer);
+  return STEP_RESULT_CONTINUE;
+}
+
 void execute_event(EventType event) {
-  printf("Executing event %d", event);
   for (int32_t i = 0; i < block_stacks[event].count; i++) {
-    printf("Executing stack %d", i);
+    printf("Executing event %d stack %d", event, i);
     BlockStack *stack = &block_stacks[event].items[i];
     if (stack->resume_timer) {
       app_timer_cancel(stack->resume_timer);
     }
-    tick_vm(&stack->state);
+    vm_reset(&stack->state);
+    tick_vm(stack);
   }
 }
 
 static void prv_select_click_handler(ClickRecognizerRef recognizer,
                                      void *context) {
-  text_layer_set_text(s_text_layer, "Select");
+  execute_event(EVENT_BTN_MIDDLE);
 }
 
 static void prv_up_click_handler(ClickRecognizerRef recognizer, void *context) {
-  text_layer_set_text(s_text_layer, "Up");
+  execute_event(EVENT_BTN_TOP);
 }
 
 static void prv_down_click_handler(ClickRecognizerRef recognizer,
                                    void *context) {
-  text_layer_set_text(s_text_layer, "Down");
+  execute_event(EVENT_BTN_BOTTOM);
+}
+
+static void main_layer_draw_handler(Layer *layer, GContext *ctx) {
+  instant = true;
+  set_local_gcontext(ctx);
+  execute_event(EVENT_LAYER_REDRAW);
+  clear_local_gcontext();
+  instant = false;
+}
+
+static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
+  if (units_changed & SECOND_UNIT) {
+    execute_event(EVENT_TIME_SECOND);
+  }
+  if (units_changed & MINUTE_UNIT) {
+    execute_event(EVENT_TIME_MINUTE);
+  }
+  if (units_changed & HOUR_UNIT) {
+    execute_event(EVENT_TIME_HOUR);
+  }
+  if (units_changed & DAY_UNIT) {
+    execute_event(EVENT_TIME_DAY);
+  }
+  if (units_changed & MONTH_UNIT) {
+    execute_event(EVENT_TIME_MONTH);
+  }
+  if (units_changed & YEAR_UNIT) {
+    execute_event(EVENT_TIME_YEAR);
+  }
+}
+
+static void tap_handler(AccelAxisType axis, int32_t direction) {
+  execute_event(EVENT_TAPPED);
 }
 
 static void prv_click_config_provider(void *context) {
@@ -119,15 +179,12 @@ static void prv_window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
 
-  s_text_layer = text_layer_create(GRect(0, 72, bounds.size.w, 20));
-  text_layer_set_text(s_text_layer, "Press a button");
-  text_layer_set_text_alignment(s_text_layer, GTextAlignmentCenter);
-  layer_add_child(window_layer, text_layer_get_layer(s_text_layer));
+  main_layer = layer_create(GRect(0, 0, bounds.size.w, bounds.size.h));
+  layer_set_update_proc(main_layer, main_layer_draw_handler);
+  layer_add_child(window_layer, main_layer);
 }
 
-static void prv_window_unload(Window *window) {
-  text_layer_destroy(s_text_layer);
-}
+static void prv_window_unload(Window *window) { layer_destroy(main_layer); }
 
 static void inbox_received_handler(DictionaryIterator *iter, void *ctx) {
   {
@@ -180,6 +237,8 @@ static void inbox_received_handler(DictionaryIterator *iter, void *ctx) {
                   instruction_capacity);
           return;
         }
+        printf("%d = %s", instruction_length,
+               vm_print_instruction(reinterpret.instruction));
         instructions[instruction_length++] = reinterpret.instruction;
       }
       if (instruction_length == instruction_capacity) {
@@ -198,13 +257,15 @@ static void inbox_received_handler(DictionaryIterator *iter, void *ctx) {
         printf("Loading handler %d (type = %d, pc = %d)", i / 5, event_type,
                event_pc);
         DA_APPEND(block_stacks[event_type], (BlockStack){});
+        int32_t stack_index = block_stacks[event_type].count - 1;
+        block_stacks[event_type].items[stack_index].event = event_type;
+        block_stacks[event_type].items[stack_index].block_stack = stack_index;
+
         printf("Initializing VM…");
-        VmState *stack = &block_stacks[event_type]
-                              .items[block_stacks[event_type].count - 1]
-                              .state;
-        vm_init(stack, &instructions[event_pc]);
-        stack->call_handler = pebble_foreign_func_call_handler;
-        stack->vars = vars;
+        VmState *state = &block_stacks[event_type].items[stack_index].state;
+        vm_init(state, &instructions[event_pc]);
+        state->call_handler = pebble_foreign_func_call_handler;
+        state->vars = vars;
       }
     }
   }
@@ -231,6 +292,10 @@ static void prv_init(void) {
                                            .load = prv_window_load,
                                            .unload = prv_window_unload,
                                        });
+  tick_timer_service_subscribe(SECOND_UNIT | MINUTE_UNIT | HOUR_UNIT |
+                                   DAY_UNIT | MONTH_UNIT | YEAR_UNIT,
+                               tick_handler);
+  accel_tap_service_subscribe(tap_handler);
   const bool animated = true;
   window_stack_push(s_window, animated);
 }

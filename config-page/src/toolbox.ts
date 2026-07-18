@@ -476,6 +476,10 @@ export const toolbox = (workspace: blockly.Workspace): ToolboxDefinition => {
             type: 'graphics_bind_on_draw',
           },
           {
+            kind: 'block',
+            type: 'graphics_bind_redraw',
+          },
+          {
             kind: 'label',
             text: 'Primitives',
           },

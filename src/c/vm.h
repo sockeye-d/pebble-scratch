@@ -73,7 +73,7 @@ typedef enum {
   TYPE_PTR,
 } VmType;
 
-#define MAX_STACK 16
+#define MAX_STACK 32
 #define MAX_CALL_STACK 32
 #define MAX_VARS 128
 
@@ -101,8 +101,10 @@ typedef struct {
 
 #define READ_INSTRUCTION() (state->instructions[state->pc++])
 #define PEEK_INSTRUCTION() (state->instructions[state->pc])
-#define PUSH() (state->stack[++state->stack_ptr])
-#define POP() (state->stack[state->stack_ptr--])
+#define PUSH()                                                                 \
+  (state->stack[check_stack_overflow(state, __LINE__), ++state->stack_ptr])
+#define POP()                                                                  \
+  (state->stack[check_stack_underflow(state, __LINE__), state->stack_ptr--])
 #define PEEK() (state->stack[state->stack_ptr])
 
 #define COERCE_NUM(m_value) ((m_value).type == TYPE_NUM ? (m_value).num : 0)
@@ -205,9 +207,30 @@ struct VmState {
 };
 
 extern void print(const char *fmt, ...);
-extern void print_debug(const char *str);
-extern void print_int(int);
-extern void print_float(double);
+extern void print_error(const char *str);
+
+extern int snprintf(char *__restrict __s, size_t __maxlen,
+                    const char *__restrict __format, ...);
+
+inline __attribute__((__always_inline__)) void
+check_stack_overflow(VmState *state, int line) {
+  if (state->stack_ptr >= MAX_STACK - 1) {
+    char str[32] = {};
+    snprintf(str, sizeof(str), "STACK OVERFLOW %d", line);
+    print_error(str);
+    __builtin_trap();
+  }
+}
+
+inline __attribute__((__always_inline__)) void
+check_stack_underflow(VmState *state, int line) {
+  if ((state->stack_ptr - 1) == (uint32_t)-1) {
+    char str[32] = {};
+    snprintf(str, sizeof(str), "STACK UNDERFLOW %d", line);
+    print_error(str);
+    __builtin_trap();
+  }
+}
 
 VmString *coerce_str(VmValue value);
 
@@ -222,6 +245,7 @@ VmStepResult vm_step(VmState *state);
 void vm_print_state(VmState *state);
 
 void vm_init(VmState *state, VmInstruction *instructions);
+void vm_reset(VmState *state);
 VmState *vm_create(VmInstruction *instructions);
 
 extern void *malloc(size_t size);

@@ -11,7 +11,10 @@ GContext *context = NULL;
 void set_local_gcontext(GContext *ctx) { context = ctx; }
 void clear_local_gcontext() { context = NULL; }
 
-#define GCTX_GUARD if (context != NULL)
+#define GCTX_GUARD                                                             \
+  if (context == NULL) {                                                       \
+    printf("Context unset");                                                   \
+  } else
 
 PBL_BIND(graphics_bind_set_fill_color) {
   VmValue _a = POP();
@@ -160,6 +163,8 @@ PBL_BIND(graphics_bind_fill_rect) {
   return STEP_RESULT_CONTINUE;
 }
 
+PBL_BIND(graphics_bind_redraw);
+
 PBL_BIND(graphics_bind_draw_line) {
   VmValue _b = POP();
   VmValue _c = POP();
@@ -226,12 +231,14 @@ PBL_BIND(graphics_bind_draw_text) {
   VmValue _3 = POP();
   VmValue _2 = POP();
   VmValue _1 = POP();
-  VmString *string = COERCE_STR(_4);
+  VmString *string = COERCE_STR(_1);
   GCTX_GUARD {
     const char *cstring = string->value;
-    int32_t font_index = COERCE_INT(_3);
-    int32_t x = COERCE_INT(_2);
-    int32_t y = COERCE_INT(_1);
+    int32_t font_index = COERCE_INT(_2);
+    int32_t x = COERCE_INT(_3);
+    int32_t y = COERCE_INT(_4);
+    printf("Drawing string %s with font %s at %d, %d", cstring,
+           font_keys[font_index], x, y);
     GFont font = fonts_get_system_font(font_keys[font_index]);
     GSize size = graphics_text_layout_get_content_size(
         cstring, font, GRect(0, 0, 10000, 10000), GTextOverflowModeWordWrap,

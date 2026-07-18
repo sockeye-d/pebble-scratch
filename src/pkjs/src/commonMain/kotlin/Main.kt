@@ -49,7 +49,7 @@ fun main() {
         KPebble.message {
             // 👊👊 bytecodeInterlock 👊👊
             //       what a cool name
-            if (!bytecodeInterlock.compareAndExchange(expectedValue = false, newValue = true)) {
+            if (bytecodeInterlock.compareAndExchange(expectedValue = false, newValue = true)) {
                 console.error("Already transmitting bytecode")
                 return@message
             }

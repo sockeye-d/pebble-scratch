@@ -955,6 +955,12 @@ void vm_init(VmState *state, VmInstruction *instructions) {
   state->call_stack_ptr = 0;
 }
 
+void vm_reset(VmState *state) {
+  state->pc = 0;
+  state->stack_ptr = 0;
+  state->call_stack_ptr = 0;
+}
+
 VmState *vm_create(VmInstruction *instructions) {
   VmState *state = malloc(sizeof(VmState));
   vm_init(state, instructions);

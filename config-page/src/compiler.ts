@@ -56,7 +56,10 @@ export function compileAllBlocks(ws: Workspace, compiler: Compiler) {
     return generateBinaryBytecode(e, (name) => functionMap[name])
   }
   bits.push(...Object.entries(functionBytecode).map(([_, e]) => bytecodeToBinary(e)))
-  const generateHandlerBinary = (type: string, eventType: ((block: Block) => EventType) | EventType) => {
+  const generateHandlerBinary = (
+    type: string,
+    eventType: ((block: Block, hatBlock: Block) => EventType) | EventType
+  ) => {
     for (const fn of ws.getBlocksByType(type)) {
       const input = fn.getInputTargetBlock('DO')
       console.log(`Compiling ${type} handler ${fn.id}`)
@@ -65,7 +68,7 @@ export function compileAllBlocks(ws: Workspace, compiler: Compiler) {
         continue
       }
       const bytecode = [...compiler.compile(input), ...ops.op(VmOp.Eof)]
-      const type2 = typeof eventType === 'function' ? eventType(input) : eventType
+      const type2 = typeof eventType === 'function' ? eventType(input, fn) : eventType
       if (!(type2 in handlers)) {
         handlers[type2] = []
       }
@@ -75,7 +78,7 @@ export function compileAllBlocks(ws: Workspace, compiler: Compiler) {
     }
   }
   generateHandlerBinary('events_main', EventType.Main)
-  generateHandlerBinary('events_on_button_pressed', (block) => {
+  generateHandlerBinary('events_on_button_pressed', (_, block) => {
     const btn = block.getFieldValue('BUTTON')
     if (btn === 'TOP') {
       return EventType.BtnTop
@@ -83,10 +86,14 @@ export function compileAllBlocks(ws: Workspace, compiler: Compiler) {
     if (btn === 'MIDDLE') {
       return EventType.BtnMiddle
     }
+    if (btn === 'BOTTOM') {
+      return EventType.BtnBottom
+    }
+    console.error(`Unknown button ${btn}`)
     return EventType.BtnBottom
   })
   generateHandlerBinary('events_on_tapped', EventType.Tapped)
-  generateHandlerBinary('events_on_time_change', (block) => {
+  generateHandlerBinary('events_on_time_change', (_, block) => {
     const btn = block.getFieldValue('UNIT')
     if (btn === 'SECOND') return EventType.TimeSecond
     if (btn === 'MINUTE') return EventType.TimeMinute

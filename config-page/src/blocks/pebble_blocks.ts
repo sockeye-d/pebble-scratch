@@ -349,6 +349,16 @@ const graphics_bind_on_draw = {
   colour: 80,
 }
 
+const graphics_bind_redraw = {
+  type: 'graphics_bind_redraw',
+  message0: 'redraw',
+  args0: [],
+  inputsInline: true,
+  previousStatement: null,
+  nextStatement: null,
+  colour: 80,
+}
+
 const graphics_bind_draw_arc = {
   type: 'graphics_bind_draw_arc',
   message0: 'draw arc from %1° to %2° at x: %3 y: %4 with radius: %5',
@@ -703,6 +713,7 @@ export const blocks = Blockly.common.createBlockDefinitionsFromJsonArray([
   graphics_bind_set_stroke_color,
   graphics_bind_set_stroke_width,
   graphics_bind_on_draw,
+  graphics_bind_redraw,
   graphics_bind_draw_arc,
   graphics_bind_fill_arc,
   graphics_bind_draw_circle,
