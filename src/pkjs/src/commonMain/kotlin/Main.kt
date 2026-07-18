@@ -1,19 +1,19 @@
 import dev.fishies.kpkjs.KPebble
 import dev.fishies.kpkjs.gen.MessageKeys
 import kotlinx.browser.localStorage
+import kotlin.concurrent.atomics.AtomicBoolean
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 const val handlerByteCount = 5
 
 const val workspaceStorageKey = "workspace"
 external fun encodeURIComponent(str: String): String
-external fun atob(base64: String): String
 
-fun base64ToByteArray(base64: String): ByteArray {
-    val binaryString = atob(base64)
-    return ByteArray(binaryString.length) { binaryString[it].code.toByte() }
-}
+// guys I'm the best programmer look at me using atomics in JavaScript
+@OptIn(ExperimentalAtomicApi::class)
+val bytecodeInterlock = AtomicBoolean(false)
 
-@OptIn(ExperimentalWasmJsInterop::class)
+@OptIn(ExperimentalWasmJsInterop::class, ExperimentalAtomicApi::class)
 fun main() {
     KPebble.events.onReady {
         println("Ready")
@@ -47,6 +47,13 @@ fun main() {
         localStorage.setItem(workspaceStorageKey, wsSerialized)
         println("wsSerialized: $wsSerialized")
         KPebble.message {
+            // 👊👊 bytecodeInterlock 👊👊
+            //       what a cool name
+            if (!bytecodeInterlock.compareAndExchange(expectedValue = false, newValue = true)) {
+                console.error("Already transmitting bytecode")
+                return@message
+            }
+
             val bytecode = response.bytecode.flatMap(::explodeInt)
 
             val headerData = js("{}")
@@ -65,9 +72,7 @@ fun main() {
                     k to v
                 }.flatMap { (event, handlers) ->
                     handlers.flatMap {
-                        (listOf(event.toInt()) + explodeInt(it)).also { bytes ->
-                            require(bytes.size == handlerByteCount) { "Expected $handlerByteCount bytes, found ${bytes.size} bytes" }
-                        }
+                        listOf(event.toInt()) + explodeInt(it)
                     }
                 }
             println("handlers: $handlers")
@@ -79,6 +84,8 @@ fun main() {
             val finalData = js("{}")
             finalData[MessageKeys.TransmissionComplete] = 0
             send(finalData)
+
+            bytecodeInterlock.store(false)
         }
     }
 }

@@ -9,6 +9,6 @@
     "program": "build/test_exe",
     "request": "launch",
     "build": { "command": "./build_test.nu", "args": ["-g", "-O0"] },
-    // "build": { "command": "./build_test.nu", "args": ["--enable", "[cmp_num_test]", "-g", "-O0"] },
+    // "build": { "command": "./build_test.nu", "args": ["--enable", "fmt_test_2", "-g", "-O0"] },
   },
 ]

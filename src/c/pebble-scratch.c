@@ -52,12 +52,12 @@ VmValue vars[256] = {};
 
 void print(const char *fmt, ...) {}
 
-void print_debug(const char *str) { printf("%s"); }
-
 static void tick_vm(void *data) {
   VmState *state = (VmState *)data;
   while (true) {
-    printf("%s", vm_print_instruction(state->instructions[state->pc]));
+    printf("pc: %d", state->pc);
+    VmInstruction current_instruction = state->instructions[state->pc];
+    printf("%s", vm_print_instruction(current_instruction));
     const VmStepResult result = vm_step(state);
     if (result == STEP_RESULT_DONE || result == STEP_RESULT_PAUSE) {
       break;
@@ -130,70 +130,90 @@ static void prv_window_unload(Window *window) {
 }
 
 static void inbox_received_handler(DictionaryIterator *iter, void *ctx) {
-  Tuple *bytecode_header_tuple = dict_find(iter, MESSAGE_KEY_BytecodeHeader);
-  if (bytecode_header_tuple) {
-    int32_t instruction_count =
-        bytecode_header_tuple->value->int32 / sizeof(VmInstruction);
-    printf("Header received. Byte length = %d", instruction_count);
-    if (instructions != NULL) {
-      free(instructions);
-      for (int i = 0; i < EVENT_MAX; i++) {
-        DA_FREE(block_stacks[i]);
+  {
+    Tuple *bytecode_header_tuple = dict_find(iter, MESSAGE_KEY_BytecodeHeader);
+    if (bytecode_header_tuple) {
+      instruction_length = 0;
+      instruction_capacity =
+          bytecode_header_tuple->value->int32 / sizeof(VmInstruction);
+      printf("Header received. Byte length = %d", instruction_capacity);
+      if (instructions != NULL) {
+        for (int32_t event_i = 0; event_i < EVENT_MAX; event_i++) {
+          for (int32_t stack_i = 0; stack_i < block_stacks[event_i].count;
+               stack_i++) {
+            AppTimer *timer = block_stacks[event_i].items[stack_i].resume_timer;
+            if (timer) {
+              app_timer_cancel(timer);
+            }
+          }
+
+          DA_FREE(block_stacks[event_i]);
+        }
+        instructions =
+            realloc(instructions, instruction_capacity * sizeof(VmInstruction));
+      } else {
+        instructions = malloc(instruction_capacity * sizeof(VmInstruction));
+      }
+      printf("Allocated %d bytes. Heap free: %d",
+             instruction_capacity * sizeof(VmInstruction), heap_bytes_free());
+    }
+  }
+  {
+    Tuple *bytecode_tuple = dict_find(iter, MESSAGE_KEY_Bytecode);
+    if (bytecode_tuple) {
+      uint8_t *bytecode = bytecode_tuple->value->data;
+      printf("Bytecode chunk received, length: [%d]",
+             bytecode_tuple->length / 4);
+      if ((bytecode_tuple->length / 4) * 4 != bytecode_tuple->length) {
+        printf("Bytecode length is not a multiple of 4");
+      }
+      for (uint16_t i = 0; i < bytecode_tuple->length; i += 4) {
+        uint32_t data = bytecode[i] | (bytecode[i + 1] << 8) |
+                        (bytecode[i + 2] << 16) | (bytecode[i + 3] << 24);
+        union {
+          uint32_t data;
+          VmInstruction instruction;
+        } reinterpret = {.data = data};
+        if (instruction_length >= instruction_capacity) {
+          APP_LOG(APP_LOG_LEVEL_ERROR,
+                  "More instructions were given than expected (%d)!",
+                  instruction_capacity);
+          return;
+        }
+        instructions[instruction_length++] = reinterpret.instruction;
+      }
+      if (instruction_length == instruction_capacity) {
+        printf("Loaded all instructions!");
       }
     }
-    instructions = malloc(instruction_count * sizeof(VmInstruction));
-    instruction_length = 0;
-    instruction_capacity = instruction_count;
   }
-  Tuple *bytecode_tuple = dict_find(iter, MESSAGE_KEY_Bytecode);
-  if (bytecode_tuple) {
-    uint8_t *bytecode = bytecode_tuple->value->data;
-    printf("Bytecode chunk received, length: [%d]", bytecode_tuple->length);
-    if ((bytecode_tuple->length / 4) * 4 != bytecode_tuple->length) {
-      printf("Bytecode length is not a multiple of 4");
-    }
-    for (uint16_t i = 0; i < bytecode_tuple->length; i += 4) {
-      uint32_t data = bytecode[i] | (bytecode[i + 1] << 8) |
-                      (bytecode[i + 2] << 16) | (bytecode[i + 3] << 24);
-      union {
-        uint32_t data;
-        VmInstruction instruction;
-      } reinterpret = {.data = data};
-      if (instruction_length >= instruction_capacity) {
-        APP_LOG(APP_LOG_LEVEL_ERROR,
-                "More instructions were given than expected (%d)!",
-                instruction_capacity);
-        return;
+  {
+    Tuple *handler_tuple = dict_find(iter, MESSAGE_KEY_Handlers);
+    if (handler_tuple) {
+      uint8_t *data = handler_tuple->value->data;
+      for (uint16_t i = 0; i < handler_tuple->length; i += 5) {
+        EventType event_type = data[i];
+        int32_t event_pc = data[i + 1] | (data[i + 2] << 8) |
+                           (data[i + 3] << 16) | (data[i + 4] << 24);
+        printf("Loading handler %d (type = %d, pc = %d)", i / 5, event_type,
+               event_pc);
+        DA_APPEND(block_stacks[event_type], (BlockStack){});
+        printf("Initializing VM…");
+        VmState *stack = &block_stacks[event_type]
+                              .items[block_stacks[event_type].count - 1]
+                              .state;
+        vm_init(stack, &instructions[event_pc]);
+        stack->call_handler = pebble_foreign_func_call_handler;
+        stack->vars = vars;
       }
-      instructions[instruction_length++] = reinterpret.instruction;
-    }
-    if (instruction_length == instruction_capacity) {
-      printf("Loaded all instructions!");
     }
   }
-  Tuple *handler_tuple = dict_find(iter, MESSAGE_KEY_Handlers);
-  if (handler_tuple) {
-    uint8_t *data = handler_tuple->value->data;
-    for (uint16_t i = 0; i < handler_tuple->length; i += 5) {
-      EventType event_type = data[i];
-      int32_t event_pc = data[i + 1] | (data[i + 2] << 8) |
-                         (data[i + 3] << 16) | (data[i + 4] << 24);
-      printf("Loading handler %d (type = %d, pc = %d)", i / 5, event_type,
-             event_pc);
-      DA_RESERVE(block_stacks[event_type], 1);
-      DA_APPEND(block_stacks[event_type], (BlockStack){});
-      printf("Initializing VM…");
-      VmState *stack = &block_stacks[event_type]
-                            .items[block_stacks[event_type].count - 1]
-                            .state;
-      vm_init(stack, &instructions[event_pc]);
-      stack->call_handler = pebble_foreign_func_call_handler;
+  {
+    Tuple *finished = dict_find(iter, MESSAGE_KEY_TransmissionComplete);
+    if (finished) {
+      printf("Finished!");
+      execute_event(EVENT_MAIN);
     }
-  }
-  Tuple *finished = dict_find(iter, MESSAGE_KEY_TransmissionComplete);
-  if (finished) {
-    printf("Transmission finished");
-    execute_event(EVENT_MAIN);
   }
 }
 

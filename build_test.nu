@@ -8,7 +8,8 @@ def analyze-file [] {
 }
 
 
-def --wrapped main [--enable: list<string> = [], ...args] {
+def --wrapped main [--enable: string = "", ...args] {
+  let enable = $enable | split row ","
   let enable_files = $enable | where $it =~ '.*\.c'
   let enable_symbols = $enable | where $it !~ '.*\.c'
   let symbols: list<record<symbols: list<string>, file: string>> = glob test/tests/*.c | each --flatten {

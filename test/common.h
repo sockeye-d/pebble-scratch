@@ -80,7 +80,7 @@
   };                                                                           \
   do {                                                                         \
     __PRINT;                                                                   \
-  } while (vm_step(&state))
+  } while (vm_step(&state) != STEP_RESULT_DONE)
 
 #define STACK(m_delta) (state.stack[state.stack_ptr - m_delta])
 #define STACK_ABS(m_frame) (state.stack[m_frame])

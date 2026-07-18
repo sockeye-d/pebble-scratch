@@ -55,6 +55,7 @@ sealed class KPebble {
 
             webViewClosedCallback = { data: dynamic ->
                 pebble.removeEventListener("webviewclosed", webViewClosedCallback)
+                println(data.response)
                 c?.resume(data.response)
             }
             pebble.addEventListener("webviewclosed", webViewClosedCallback)

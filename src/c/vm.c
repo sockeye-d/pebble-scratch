@@ -55,24 +55,84 @@ void cleanup_val(VmState *state, VmValue value) {
 
 void cleanup_val_str(VmState *state, VmString *value) { string_unref(value); }
 
-#define VM_STRING_MINIMUM_ALLOC 4
+#define VM_STRING_MINIMUM_ALLOC 2
 
-VmString *string_fmt_num(int32_t places, double num) {
+typedef struct {
+  int32_t count;
+  int32_t capacity;
+  char *items;
+} StringBuilder;
+
+static char *string_fmt_int(int num, size_t *len) {
   size_t allocation_size = VM_STRING_MINIMUM_ALLOC;
-  char *str = NULL;
+  char *main_str = NULL;
   while (true) {
-    str = malloc(sizeof(char) * allocation_size);
-
-    size_t written = snprintf(str, allocation_size, "%.*f", places, num);
-
-    if (written <= allocation_size) {
-      MAKE_STRING(r, str, written);
-      return r;
+    if (main_str) {
+      main_str = realloc(main_str, sizeof(char) * allocation_size);
+    } else {
+      main_str = malloc(sizeof(char) * allocation_size);
     }
-    free(str);
-    // ~1.5×
-    allocation_size += (allocation_size >> 1) + 1;
+
+    *len = snprintf(main_str, allocation_size, "%d", num);
+
+    // len doesn't include null terminator
+    if ((*len) < allocation_size) {
+      break;
+    }
+    allocation_size++;
   }
+  return main_str;
+}
+
+static int32_t pow10(int32_t exp) {
+  switch (exp) {
+  case 0:
+    return 1;
+  case 1:
+    return 10;
+  case 2:
+    return 100;
+  case 3:
+    return 1000;
+  case 4:
+    return 10000;
+  case 5:
+    return 100000;
+  case 6:
+    return 1000000;
+  case 7:
+    return 10000000;
+  case 8:
+    return 100000000;
+  case 9:
+    return 1000000000;
+  default:
+    return 10;
+  }
+}
+
+VmString *string_fmt_num(int32_t places, VmNum num) {
+  char *main_str = NULL;
+  size_t main_str_len = 0;
+  main_str = string_fmt_int(num / VM_NUM_RATIO, &main_str_len);
+  if (num / VM_NUM_RATIO * VM_NUM_RATIO == num) {
+    MAKE_STRING(r, main_str, main_str_len);
+    return r;
+  }
+  char *dec_str = NULL;
+  size_t dec_str_len = 0;
+  dec_str = string_fmt_int(abs(num - num / VM_NUM_RATIO * VM_NUM_RATIO) *
+                               pow10(places) / VM_NUM_RATIO,
+                           &dec_str_len);
+  // +1 for '.', +1 for '\0'
+  size_t final_len = main_str_len + dec_str_len + 2;
+  main_str = realloc(main_str, final_len);
+  main_str[main_str_len] = '.';
+  memcpy(&main_str[main_str_len + 1], dec_str, dec_str_len);
+  free(dec_str);
+  main_str[final_len - 1] = '\0';
+  MAKE_STRING(r, main_str, final_len);
+  return r;
 }
 
 VmString *string_cat(const char *a, const char *b) {
@@ -202,7 +262,7 @@ inline __attribute__((__always_inline__)) VmString *coerce_str(VmValue value) {
     // this cast is probably fine
     return value.b ? (VmString *)&string_true : (VmString *)&string_false;
   }
-  return string_fmt_num(2, NUM_AS_FLOAT(value.num));
+  return string_fmt_num(2, value.num);
 }
 
 inline __attribute__((__always_inline__)) bool coerce_bool(VmValue value) {
@@ -643,7 +703,7 @@ VmStepResult vm_step(VmState *state) {
   case OP_FMT: {
     VmValue _b = POP();
     VmValue _a = POP();
-    double num = NUM_AS_DOUBL(COERCE_NUM(_a));
+    VmNum num = COERCE_NUM(_a);
     int32_t decimal_places = COERCE_INT(_b);
     PUSH() = (VmValue){
         .type = TYPE_STRING,

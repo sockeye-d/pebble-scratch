@@ -141,7 +141,7 @@ typedef struct {
   do {                                                                         \
     if (m_list.count >= m_list.capacity) {                                     \
       if (m_list.capacity == 0) {                                              \
-        m_list.capacity = 8;                                                   \
+        m_list.capacity = 1;                                                   \
       } else {                                                                 \
         m_list.capacity *= 2;                                                  \
       }                                                                        \
@@ -153,8 +153,11 @@ typedef struct {
 
 #define DA_FREE(m_list)                                                        \
   do {                                                                         \
-    if (m_list.items != NULL) {                                                \
-      free(m_list.items);                                                      \
+    if ((m_list).items != NULL) {                                              \
+      free((m_list).items);                                                    \
+      (m_list).items = NULL;                                                   \
+      (m_list).count = 0;                                                      \
+      (m_list).capacity = 0;                                                   \
     }                                                                          \
   } while (false)
 
@@ -203,6 +206,8 @@ struct VmState {
 
 extern void print(const char *fmt, ...);
 extern void print_debug(const char *str);
+extern void print_int(int);
+extern void print_float(double);
 
 VmString *coerce_str(VmValue value);
 

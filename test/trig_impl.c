@@ -146,3 +146,5 @@ uint32_t normalize_angle(int32_t angle) {
   }
   return normalized_angle;
 }
+
+void print(const char *fmt, ...) {}
