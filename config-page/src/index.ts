@@ -97,7 +97,7 @@ async function main() {
 
   ws.updateToolbox(toolbox(ws))
 
-  // ws.clear()
+  ws.clear()
 
   const urlParams = new URLSearchParams(window.location.search)
   const workspaceString = urlParams.get('workspace')

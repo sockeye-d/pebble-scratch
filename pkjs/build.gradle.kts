@@ -1,7 +1,7 @@
 import groovy.json.JsonSlurper
 
 plugins {
-    kotlin("multiplatform") version "2.3.21"
+    kotlin("multiplatform") apply true
 }
 
 val generatedSrc = project.layout.buildDirectory.dir("src/commonMain/kotlin")
@@ -32,16 +32,14 @@ val generateMessageKeys = tasks.register("generateMessageKeys") {
         val packageJson = JsonSlurper().parse(packageJsonFile) as Map<*, *>
         val inner =
             ((packageJson["pebble"] as Map<*, *>)["messageKeys"] as List<*>).joinToString("\n") { "const val $it: String = \"\"\"$it\"\"\"" }
-        output.writeText(
-            """
-            package dev.fishies.kpkjs.gen
-            
-            object MessageKeys {
-${inner.prependIndent("                ")}
-            }
-            
-""".trimIndent()
-        )
+        output.writeText(buildString {
+            appendLine("package dev.fishies.kpkjs.gen")
+            appendLine()
+            appendLine("object MessageKeys {")
+            appendLine(inner.prependIndent("    "))
+            appendLine("}")
+            appendLine()
+        })
     }
 }
 

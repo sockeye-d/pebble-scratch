@@ -6,3 +6,15 @@ compile_commands.json
 test_exe
 src/c/pebble_foreign_funcs_gen
 config-page/dist
+
+# Ignore Gradle project-specific cache directory
+.gradle
+
+# Ignore Gradle build output directory
+build
+
+# Ignore Kotlin plugin data
+.kotlin
+.idea/
+
+local.properties

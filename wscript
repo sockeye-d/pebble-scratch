@@ -26,11 +26,6 @@ def configure(ctx):
 def build(ctx):
     ctx.load("pebble_sdk")
 
-    ctx(
-        rule=f"cd {ctx.path}/src/pkjs && {ctx.path}/src/pkjs/gradlew assemble",
-        always=True,
-    )
-
     build_worker = os.path.exists("worker_src")
     binaries = []
 
@@ -63,8 +58,8 @@ def build(ctx):
         binaries=binaries,
         js=ctx.path.ant_glob(
             [
-                "src/pkjs/build/dist/js/productionLibrary/*.js",
+                "pkjs/build/dist/js/productionLibrary/*.js",
             ]
         ),
-        js_entry_file="src/pkjs/build/dist/js/productionLibrary/pkjs.js",
+        js_entry_file="pkjs/build/dist/js/productionLibrary/pkjs.js",
     )
